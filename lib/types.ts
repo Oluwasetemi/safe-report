@@ -51,6 +51,7 @@ export interface Report {
   ai_confidence?: number
   is_duplicate: boolean
   parent_incident_id?: string
+  embedding?: number[]
   confidence_score: number
   corroboration_count: number
   reporter_trust_multiplier?: number
@@ -107,7 +108,7 @@ export interface AuthorityUser {
 
 export interface AlertPayload {
   reportId: string
-  category: string
+  category: Category
   severity: Severity
   address: string
   parish: string
@@ -126,7 +127,7 @@ export type ServerEvent =
   | { type: 'INCIDENT_UPDATED'; incident: Report }
   | { type: 'INCIDENT_RESOLVED'; incidentId: string }
   | { type: 'INCIDENT_CORROBORATED'; incidentId: string; confidenceScore: number; count: number }
-  | { type: 'STATUS_UPDATE'; incidentId: string; status: string; authorityName: string }
+  | { type: 'STATUS_UPDATE'; incidentId: string; status: ReportStatus; authorityName: string }
   | { type: 'PROXIMITY_ALERT'; incident: Report; distanceMeters: number }
 
 export type ClientEvent =
