@@ -5,7 +5,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${process.env.VOYAGE_API_KEY}`,
     },
-    body: JSON.stringify({ input: text, model: 'voyage-3' }),
+    body: JSON.stringify({ input: text, model: 'voyage-large-2' }),
   })
 
   if (!res.ok) {

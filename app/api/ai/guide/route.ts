@@ -1,4 +1,4 @@
-import { streamText } from 'ai'
+import { streamText, convertToModelMessages, createUIMessageStreamResponse } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { NextRequest } from 'next/server'
 import { SAFEGUIDE_SYSTEM_PROMPT } from '@/lib/ai/prompts'
@@ -7,17 +7,19 @@ const MAX_MESSAGES = 20
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const messages = Array.isArray(body.messages) ? body.messages.slice(-MAX_MESSAGES) : []
+  const rawMessages = Array.isArray(body.messages) ? body.messages.slice(-MAX_MESSAGES) : []
 
-  if (!messages.length) {
+  if (!rawMessages.length) {
     return new Response('messages array is required', { status: 400 })
   }
 
   const result = streamText({
     model:    anthropic('claude-sonnet-4-5'),
     system:   SAFEGUIDE_SYSTEM_PROMPT,
-    messages,
+    messages: await convertToModelMessages(rawMessages),
   })
 
-  return result.toTextStreamResponse()
+  return createUIMessageStreamResponse({
+    stream: result.toUIMessageStream(),
+  })
 }
