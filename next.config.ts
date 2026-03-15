@@ -31,6 +31,14 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'Content-Type', value: 'application/javascript' },
           { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Cache-Control', value: 'no-cache' },
+        ],
+      },
+      {
+        source: '/manifest.json',
+        headers: [
+          { key: 'Content-Type', value: 'application/manifest+json' },
+          { key: 'Cache-Control', value: 'public, max-age=3600' },
         ],
       },
     ]

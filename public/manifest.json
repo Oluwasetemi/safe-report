@@ -1,0 +1,47 @@
+{
+  "name": "SafeReport",
+  "short_name": "SafeReport",
+  "description": "Real-time incident reporting for all 14 parishes of Jamaica.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0A0A0A",
+  "theme_color": "#D4FF00",
+  "orientation": "portrait-primary",
+  "lang": "en-JM",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Report Incident",
+      "short_name": "Report",
+      "url": "/report",
+      "description": "Submit a new incident report"
+    },
+    {
+      "name": "Live Map",
+      "short_name": "Map",
+      "url": "/map",
+      "description": "View live incident map"
+    }
+  ],
+  "categories": ["utilities", "social"],
+  "prefer_related_applications": false
+}

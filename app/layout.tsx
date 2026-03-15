@@ -66,6 +66,7 @@ export const metadata: Metadata = {
       'Real-time incident reporting for all 14 parishes of Jamaica.',
     images: [`/api/og?title=THE+ISLAND+WATCHES+OVER+ITSELF&description=Real-time+incident+reporting+for+all+14+parishes+of+Jamaica`],
   },
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.png',
