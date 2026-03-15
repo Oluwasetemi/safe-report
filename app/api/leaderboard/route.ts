@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const tab = searchParams.get('tab') ?? 'global'
-  const supabase = await createServerSupabaseClient()
+  const supabase = createServiceSupabaseClient()
 
   const { data, error } = await supabase
     .from('reporter_profiles')

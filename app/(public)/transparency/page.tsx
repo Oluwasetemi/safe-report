@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'Transparency Report',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default async function TransparencyPage() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createServiceSupabaseClient()
 
   const [
     { count: total },

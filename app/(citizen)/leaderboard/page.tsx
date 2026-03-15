@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'Community Leaderboard',
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default async function LeaderboardPage() {
-  const supabase = await createServerSupabaseClient()
+  const supabase = createServiceSupabaseClient()
 
   const [
     { data: globalTop },

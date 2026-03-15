@@ -166,6 +166,12 @@ export async function POST(req: NextRequest) {
         .eq('id', report.id)
     }
 
+    // Upsert reporter profile — atomic increment via RPC (non-blocking)
+    const SEVERITY_POINTS: Record<string, number> = { CRITICAL: 50, HIGH: 30, MEDIUM: 20, LOW: 10 }
+    const pts = SEVERITY_POINTS[finalClassification.severity] ?? 10
+    supabase.rpc('upsert_reporter_stats', { p_fingerprint: fingerprint, p_points: pts })
+      .catch((e) => console.error('[reporter_profile] upsert error:', e))
+
     // Fire push notifications (non-blocking)
     citizenPush(report).catch((e) => console.error('[push] citizenPush error:', e))
 

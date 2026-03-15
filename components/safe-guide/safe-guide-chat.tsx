@@ -40,19 +40,22 @@ export function SafeGuideChat({ onClose }: SafeGuideChatProps) {
       .join('')
   }
 
-  // Text-to-speech for assistant messages
+  // Text-to-speech for assistant messages — only when streaming is complete
+  const spokenIdRef = useRef<string | null>(null)
   useEffect(() => {
+    if (isLoading) return
     const lastMsg = messages[messages.length - 1]
-    if (lastMsg?.role === 'assistant' && 'speechSynthesis' in window) {
-      const text = getMessageText(lastMsg)
-      if (text) {
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.lang = 'en-JM'
-        utterance.rate = 0.9
-        window.speechSynthesis.speak(utterance)
-      }
-    }
-  }, [messages])
+    if (lastMsg?.role !== 'assistant') return
+    if (spokenIdRef.current === lastMsg.id) return
+    const text = getMessageText(lastMsg)
+    if (!text || !('speechSynthesis' in window)) return
+    spokenIdRef.current = lastMsg.id
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-JM'
+    utterance.rate = 0.9
+    window.speechSynthesis.speak(utterance)
+  }, [messages, isLoading])
 
   return (
     <div style={{
