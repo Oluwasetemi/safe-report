@@ -9,11 +9,13 @@ import { createServiceSupabaseClient } from '@/lib/supabase/server'
 export function createStorageAdapter(): StorageAdapter<unknown> {
   return {
     async read(key: string) {
+      const chatId = Number(key)
+      if (!Number.isFinite(chatId)) throw new Error(`Invalid session key: "${key}"`)
       const supabase = createServiceSupabaseClient()
       const { data, error } = await supabase
         .from('telegram_sessions')
         .select('session_data')
-        .eq('chat_id', Number(key))
+        .eq('chat_id', chatId)
         .single()
 
       // PGRST116 = "no rows returned" — not an error, just no session yet
@@ -21,15 +23,17 @@ export function createStorageAdapter(): StorageAdapter<unknown> {
         if (error.code === 'PGRST116') return undefined
         throw new Error(error.message)
       }
-      return data?.session_data ?? undefined
+      return data?.session_data
     },
 
     async write(key: string, value: unknown) {
+      const chatId = Number(key)
+      if (!Number.isFinite(chatId)) throw new Error(`Invalid session key: "${key}"`)
       const supabase = createServiceSupabaseClient()
       const { error } = await supabase
         .from('telegram_sessions')
         .upsert({
-          chat_id: Number(key),
+          chat_id: chatId,
           session_data: value,
           updated_at: new Date().toISOString(),
         })
@@ -37,11 +41,13 @@ export function createStorageAdapter(): StorageAdapter<unknown> {
     },
 
     async delete(key: string) {
+      const chatId = Number(key)
+      if (!Number.isFinite(chatId)) throw new Error(`Invalid session key: "${key}"`)
       const supabase = createServiceSupabaseClient()
       const { error } = await supabase
         .from('telegram_sessions')
         .delete()
-        .eq('chat_id', Number(key))
+        .eq('chat_id', chatId)
       if (error) throw new Error(error.message)
     },
   }
