@@ -1,30 +1,6 @@
 import { ImageResponse } from 'next/og'
-import { NextRequest } from 'next/server'
-import { readFileSync } from 'fs'
-import { join } from 'path'
 
-export const runtime = 'nodejs'
-
-// Cache the font so we don't re-fetch on every request
-let cachedFont: ArrayBuffer | null = null
-
-async function loadBarlowCondensed(): Promise<ArrayBuffer | null> {
-  if (cachedFont) return cachedFont
-  try {
-    // Fetch font CSS from Google Fonts, extract woff2 URL
-    const cssRes = await fetch(
-      'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&display=swap',
-      { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SafeReport/1.0)' } }
-    )
-    const css = await cssRes.text()
-    const match = css.match(/src:\s*url\(([^)]+\.woff2)\)/)
-    if (!match) return null
-    cachedFont = await fetch(match[1]).then(r => r.arrayBuffer())
-    return cachedFont
-  } catch {
-    return null
-  }
-}
+export const runtime = 'edge'
 
 const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: '#FF2D2D',
@@ -33,148 +9,152 @@ const SEVERITY_COLORS: Record<string, string> = {
   LOW:      '#00C853',
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl
-  const title       = searchParams.get('title')       ?? 'SafeReport'
-  const description = searchParams.get('description') ?? 'Real-time incident reporting across all 14 parishes of Jamaica.'
-  const severity    = searchParams.get('severity')    // CRITICAL | HIGH | MEDIUM | LOW
-  const parish      = searchParams.get('parish')
-
-  // Load logo from public dir (transparent PNG shield icon)
-  let logoSrc: string | null = null
+export async function GET(request: Request) {
   try {
-    const buf = readFileSync(join(process.cwd(), 'public/logo-shield.png'))
-    logoSrc = `data:image/png;base64,${buf.toString('base64')}`
-  } catch { /* no logo */ }
+    const { searchParams } = new URL(request.url)
+    const title       = searchParams.get('title')       ?? 'SafeReport'
+    const description = searchParams.get('description') ?? 'Real-time incident reporting across all 14 parishes of Jamaica.'
+    const severity    = searchParams.get('severity')
+    const parish      = searchParams.get('parish')
 
-  const fontData = await loadBarlowCondensed()
-  const fontFamily = fontData ? 'Barlow Condensed' : 'sans-serif'
-  const severityColor = severity ? (SEVERITY_COLORS[severity] ?? '#8A9BC0') : null
+    const severityColor = severity ? (SEVERITY_COLORS[severity] ?? '#8A9BC0') : null
+    const titleSize = title.length > 50 ? 52 : title.length > 30 ? 64 : 76
+    const words = title.split(' ')
 
-  // Dynamic font size based on title length
-  const titleSize = title.length > 50 ? 52 : title.length > 30 ? 64 : 76
+    // Fetch Barlow Condensed 700 from Google Fonts
+    let fontData: ArrayBuffer | null = null
+    try {
+      const cssRes = await fetch(
+        'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&display=swap',
+        { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } }
+      )
+      const css = await cssRes.text()
+      const match = css.match(/src:\s*url\(([^)]+\.woff2)\)/)
+      if (match) {
+        fontData = await fetch(match[1]).then(r => r.arrayBuffer())
+      }
+    } catch { /* use system font */ }
 
-  return new ImageResponse(
-    (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          background: '#0A0A0A',
-          padding: '56px 72px 48px',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Chartreuse left accent bar */}
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, background: '#D4FF00' }} />
+    const ff = fontData ? 'Barlow Condensed' : 'sans-serif'
 
-        {/* Dot-grid background */}
-        <div style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(circle, rgba(212,255,0,0.07) 1px, transparent 1px)',
-          backgroundSize: '36px 36px',
-        }} />
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#0A0A0A',
+            padding: '52px 72px 44px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Chartreuse left accent bar */}
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, background: '#D4FF00', display: 'flex' }} />
 
-        {/* Corner glow */}
-        <div style={{
-          position: 'absolute', top: -120, right: -120,
-          width: 480, height: 480,
-          background: 'radial-gradient(circle, rgba(212,255,0,0.06) 0%, transparent 70%)',
-        }} />
+          {/* Top-right glow */}
+          <div style={{
+            position: 'absolute', top: -160, right: -160,
+            width: 520, height: 520, borderRadius: 260,
+            background: 'rgba(212,255,0,0.05)',
+            display: 'flex',
+          }} />
 
-        {/* ── Header row ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 48 }}>
-          {/* Logo + wordmark */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            {logoSrc && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoSrc} width={44} height={44} style={{ objectFit: 'contain' }} alt="" />
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ display: 'flex', fontFamily, fontWeight: 700, fontSize: 20, letterSpacing: 3, textTransform: 'uppercase' }}>
+          {/* ── Header ── */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 52 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', fontFamily: ff, fontWeight: 700, fontSize: 24, letterSpacing: 4, textTransform: 'uppercase' }}>
                 <span style={{ color: '#F2F4F7' }}>SAFE</span>
                 <span style={{ color: '#D4FF00' }}>REPORT</span>
               </div>
-              <span style={{ fontSize: 10, letterSpacing: 2, color: '#4A5A7A', textTransform: 'uppercase' }}>
+              <span style={{ fontFamily: ff, fontSize: 11, letterSpacing: 3, color: '#7A8FAD', textTransform: 'uppercase', display: 'flex' }}>
                 Jamaica Community Safety Network
               </span>
             </div>
+
+            {severity && severityColor && (
+              <div style={{
+                background: severityColor,
+                color: '#0A0A0A',
+                padding: '8px 24px',
+                fontFamily: ff,
+                fontWeight: 700,
+                fontSize: 16,
+                letterSpacing: 3,
+                textTransform: 'uppercase',
+                display: 'flex',
+              }}>
+                {severity}
+              </div>
+            )}
           </div>
 
-          {/* Severity badge */}
-          {severity && severityColor && (
+          {/* ── Title — first word chartreuse ── */}
+          <div style={{ display: 'flex', flex: 1, alignItems: 'center' }}>
             <div style={{
-              background: severityColor,
-              color: severityColor === '#FFD600' ? '#0A0A0A' : '#0A0A0A',
-              padding: '8px 22px',
-              fontFamily,
+              fontFamily: ff,
               fontWeight: 700,
-              fontSize: 15,
-              letterSpacing: 2,
+              fontSize: titleSize,
+              lineHeight: 0.92,
+              letterSpacing: -1,
               textTransform: 'uppercase',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 18,
             }}>
-              {severity}
+              {words.map((word, i) => (
+                <span key={i} style={{ color: i === 0 ? '#D4FF00' : '#F2F4F7' }}>
+                  {word}
+                </span>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* ── Main title ── */}
-        <div style={{
-          fontFamily,
-          fontWeight: 700,
-          fontSize: titleSize,
-          lineHeight: 0.95,
-          letterSpacing: -1,
-          color: '#F2F4F7',
-          textTransform: 'uppercase',
-          marginBottom: 20,
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-        }}>
-          {title}
-        </div>
+          {/* ── Description ── */}
+          <div style={{
+            fontFamily: ff,
+            fontSize: 22,
+            color: '#C4D0E8',
+            lineHeight: 1.4,
+            marginBottom: 32,
+            maxWidth: 820,
+            display: 'flex',
+          }}>
+            {description}
+          </div>
 
-        {/* ── Description ── */}
-        <div style={{
-          fontSize: 21,
-          color: '#8A9BC0',
-          lineHeight: 1.45,
-          marginBottom: 36,
-          maxWidth: 820,
-        }}>
-          {description}
-        </div>
-
-        {/* ── Footer bar ── */}
-        <div style={{
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          paddingTop: 22,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}>
-          <span style={{ fontSize: 12, letterSpacing: 2, color: '#4A5A7A', textTransform: 'uppercase' }}>
-            {parish ? `${parish} · Jamaica` : 'All 14 Parishes · Jamaica'}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 6, height: 6, borderRadius: 3, background: '#D4FF00' }} />
-            <span style={{ fontSize: 12, letterSpacing: 2, color: '#D4FF00', textTransform: 'uppercase' }}>
-              safereport.gov.jm
+          {/* ── Footer ── */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.08)',
+            paddingTop: 20,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}>
+            <span style={{ fontFamily: ff, fontSize: 13, letterSpacing: 2, color: '#7A8FAD', textTransform: 'uppercase', display: 'flex' }}>
+              {parish ? `${parish} · Jamaica` : 'All 14 Parishes · Jamaica'}
             </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 7, height: 7, borderRadius: 4, background: '#D4FF00', display: 'flex' }} />
+              <span style={{ fontFamily: ff, fontSize: 13, letterSpacing: 2, color: '#D4FF00', textTransform: 'uppercase', display: 'flex' }}>
+                safereport.gov.jm
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-    ),
-    {
-      width: 1200,
-      height: 630,
-      fonts: fontData
-        ? [{ name: 'Barlow Condensed', data: fontData, weight: 700, style: 'normal' }]
-        : undefined,
-    }
-  )
+      ),
+      {
+        width: 1200,
+        height: 630,
+        fonts: fontData
+          ? [{ name: 'Barlow Condensed', data: fontData, weight: 700, style: 'normal' }]
+          : undefined,
+      }
+    )
+  } catch (e) {
+    console.error('OG generation failed:', e)
+    return new Response('Failed to generate image', { status: 500 })
+  }
 }

@@ -11,7 +11,7 @@ const ClassificationSchema = z.object({
   subcategory:    z.string(),
   severity:       z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
   urgencySignals: z.array(z.string()),
-  confidence:     z.number().min(0).max(1),
+  confidence:     z.number(),
 })
 
 export interface ClassifyInput {

@@ -9,8 +9,8 @@
   --color-navy:       #0D1829;
   --color-ink-card:   #1A2235;
   --color-snow:       #F2F4F7;
-  --color-steel:      #8A9BC0;
-  --color-fog:        #4A5A7A;
+  --color-steel:      #C4D0E8;
+  --color-fog:        #7A8FAD;
   --color-crit:       #FF2D2D;
   --color-fire:       #FF7A00;
   --color-warn:       #FFD600;
@@ -39,8 +39,8 @@
   --surface-raised: #0D1829;
   --surface-card: #1A2235;
   --text-primary: #F2F4F7;
-  --text-secondary: #8A9BC0;
-  --text-muted: #4A5A7A;
+  --text-secondary: #C4D0E8;
+  --text-muted: #7A8FAD;
   --severity-critical: #FF2D2D;
   --severity-high: #FF7A00;
   --severity-medium: #FFD600;

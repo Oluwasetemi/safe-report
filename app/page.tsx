@@ -196,7 +196,7 @@ export default function LandingPage() {
           {/* Live badge */}
           <div className="flex items-center gap-4 mb-6">
             <LiveBadge />
-            <span className="font-data text-[10px] tracking-[2px] text-fog">
+            <span className="font-data text-[10px] tracking-[2px] ">
               JAMAICA COMMUNITY SAFETY NETWORK
             </span>
           </div>
@@ -245,7 +245,7 @@ export default function LandingPage() {
             ].map(stat => (
               <div key={stat.label}>
                 <div className="font-data font-bold text-[28px] text-brand leading-none">{stat.value}</div>
-                <div className="font-condensed text-[11px] tracking-[2px] text-fog mt-1 uppercase">{stat.label}</div>
+                <div className="font-condensed text-[11px] tracking-[2px] mt-1 uppercase">{stat.label}</div>
               </div>
             ))}
           </div>
