@@ -90,6 +90,13 @@ export function SidebarNav({ orgName, userName, unreadCount = 0, orgId }: Sideba
 
       {/* User + sign out */}
       <div style={{ padding: 16, borderTop: '1px solid var(--border)' }}>
+        <Link
+          href="/"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: 13, fontFamily: 'var(--font-barlow)', textDecoration: 'none', marginBottom: 12, padding: '4px 0' }}
+        >
+          <span>🏠</span>
+          <span>Public site</span>
+        </Link>
         <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '0 0 8px' }}>{userName}</p>
         <button onClick={handleSignOut}
           style={{ width: '100%', padding: '8px', background: 'none', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, fontFamily: 'var(--font-barlow)' }}>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { LoginForm } from '@/components/authority/login-form'
 
 export const metadata: Metadata = {
@@ -29,6 +30,11 @@ export default function AuthorityLoginPage() {
           </p>
         </div>
         <LoginForm />
+        <p style={{ textAlign: 'center', marginTop: 24 }}>
+          <Link href="/" style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: 'var(--font-barlow-condensed)', textDecoration: 'none', letterSpacing: 1 }}>
+            ← Public site
+          </Link>
+        </p>
       </div>
     </main>
   )

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
@@ -37,6 +38,14 @@ export default async function TransparencyPage() {
 
   return (
     <main style={{ minHeight: '100vh', background: 'var(--surface-base)', color: 'var(--text-primary)', maxWidth: 900, margin: '0 auto', padding: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+        <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 13, fontFamily: 'var(--font-barlow-condensed)', textDecoration: 'none', letterSpacing: 1, transition: 'color 0.15s' }}>
+          ← HOME
+        </Link>
+        <Link href="/report" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--brand-primary)', color: '#0A0A0A', fontSize: 13, fontFamily: 'var(--font-barlow-condensed)', fontWeight: 700, textDecoration: 'none', letterSpacing: 1, padding: '6px 14px', borderRadius: 4 }}>
+          + REPORT INCIDENT
+        </Link>
+      </div>
       <h1 style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 40, margin: '0 0 8px' }}>TRANSPARENCY DASHBOARD</h1>
       <p style={{ color: 'var(--text-muted)', marginBottom: 40 }}>Public accountability for civic response in Jamaica</p>
 
