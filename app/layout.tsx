@@ -67,9 +67,9 @@ export const metadata: Metadata = {
     images: [`/api/og?title=THE+ISLAND+WATCHES+OVER+ITSELF&description=Real-time+incident+reporting+for+all+14+parishes+of+Jamaica`],
   },
   icons: {
-    icon: '/2-Photoroom.png',
-    shortcut: '/2-Photoroom.png',
-    apple: '/2-Photoroom.png',
+    icon: '/favicon.ico',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
 }
 
