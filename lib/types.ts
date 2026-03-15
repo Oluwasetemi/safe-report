@@ -133,3 +133,15 @@ export type ServerEvent =
 export type ClientEvent =
   | { type: 'CORROBORATE'; incidentId: string }
   | { type: 'LOCATION_UPDATE'; lat: number; lng: number }
+
+export interface PushSubscriptionRow {
+  id: string
+  endpoint: string
+  p256dh: string
+  auth: string
+  type: 'citizen' | 'authority'
+  lat: number | null
+  lng: number | null
+  org_id: string | null
+  created_at: string
+}
