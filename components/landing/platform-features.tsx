@@ -93,6 +93,7 @@ type Channel = {
   description: string
   steps: string[]
   hint?: string
+  link?: string
   live: boolean
 }
 
@@ -121,10 +122,11 @@ const CHANNELS: Channel[] = [
     id: 'telegram',
     icon: '✈️',
     name: 'Telegram Bot',
-    tagline: 'Report via @SafeReportJM',
+    tagline: 'Report via @safereport_jm_bot',
     description: 'Chat-based reporting directly inside Telegram. Share location, photo, and description — guided in three messages.',
-    steps: ['Message @SafeReportJM', 'Send REPORT', 'Follow guided prompts'],
-    hint: '@SafeReportJM',
+    steps: ['Message @safereport_jm_bot', 'Tap Start', 'Follow guided prompts'],
+    hint: '@safereport_jm_bot',
+    link: 'https://t.me/safereport_jm_bot',
     live: true,
   },
   {
@@ -597,7 +599,11 @@ export function PlatformFeatures() {
                     {/* Hint */}
                     {ch.hint && (
                       <div className={`mt-4 font-data text-[9px] tracking-[1.5px] uppercase border-t border-white/[0.04] pt-4 ${ch.live ? 'text-brand/60' : 'text-fog/30'}`}>
-                        {ch.hint}
+                        {ch.link ? (
+                          <a href={ch.link} target="_blank" rel="noopener noreferrer" className="hover:text-brand transition-colors duration-200">
+                            {ch.hint}
+                          </a>
+                        ) : ch.hint}
                       </div>
                     )}
                   </div>

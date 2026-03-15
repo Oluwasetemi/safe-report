@@ -52,7 +52,19 @@ async function handleLeaderboard(ctx: BotContext) {
 
 // Lazily initialised so that Next.js build-time page data collection does not
 // throw when TELEGRAM_BOT_TOKEN is absent from the build environment.
+// _initPromise ensures bot.init() (the getMe API call) runs exactly once
+// across all serverless invocations that share the same module instance.
 let _bot: Bot<BotContext> | null = null
+let _initPromise: Promise<void> | null = null
+
+export async function getInitializedBot(): Promise<Bot<BotContext>> {
+  const bot = getBot()
+  if (!_initPromise) {
+    _initPromise = bot.init()
+  }
+  await _initPromise
+  return bot
+}
 
 export function getBot(): Bot<BotContext> {
   if (_bot) return _bot
