@@ -144,24 +144,28 @@ export default function LandingPage() {
 
         {/* Nav links */}
         <div className="flex items-center gap-1">
-          {([
-            ['Live Map',     '/map'],
-            ['Transparency', '/transparency'],
-            ['Leaderboard',  '/leaderboard'],
-          ] as [string, string][]).map(([label, href]) => (
-            <Link
-              key={href}
-              href={href}
-              className="font-condensed font-semibold text-[13px] tracking-[2px] text-steel uppercase px-4 py-2 transition-colors duration-200 hover:text-snow"
-            >
-              {label}
-            </Link>
-          ))}
+          {/* Text links — hidden on mobile to prevent overflow */}
+          <div className="hidden md:flex items-center gap-1">
+            {([
+              ['Live Map',     '/map'],
+              ['Transparency', '/transparency'],
+              ['Leaderboard',  '/leaderboard'],
+            ] as [string, string][]).map(([label, href]) => (
+              <Link
+                key={href}
+                href={href}
+                className="font-condensed font-semibold text-[13px] tracking-[2px] text-steel uppercase px-4 py-2 transition-colors duration-200 hover:text-snow"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
           <Link
             href="/authority/login"
-            className="font-condensed font-bold text-[13px] tracking-[2px] text-ink bg-brand uppercase px-5 py-[9px] rounded-[4px] ml-2 transition-[background,transform] duration-150 hover:bg-brand-dark hover:-translate-y-px"
+            className="font-condensed font-bold text-[13px] tracking-[2px] text-ink bg-brand uppercase px-4 md:px-5 py-[9px] rounded-[4px] ml-2 transition-[background,transform] duration-150 hover:bg-brand-dark hover:-translate-y-px"
           >
-            Authority Portal
+            <span className="hidden sm:inline">Authority Portal</span>
+            <span className="sm:hidden">Portal</span>
           </Link>
         </div>
       </nav>
@@ -187,7 +191,7 @@ export default function LandingPage() {
         />
 
         {/* Hero content */}
-        <div className="absolute inset-0 z-[4] flex flex-col justify-center px-8 md:px-12 max-w-[760px]">
+        <div className="absolute inset-0 z-[4] flex flex-col justify-center px-8 md:px-12 max-w-[760px] pt-16">
 
           {/* Live badge */}
           <div className="flex items-center gap-4 mb-6">
@@ -233,7 +237,7 @@ export default function LandingPage() {
           </div>
 
           {/* Stats */}
-          <div className="flex gap-8 mt-12">
+          <div className="flex gap-6 sm:gap-8 mt-10 sm:mt-12 flex-wrap">
             {[
               { value: '14',   label: 'PARISHES'  },
               { value: '6',    label: 'AGENCIES'  },
@@ -385,7 +389,7 @@ export default function LandingPage() {
       {/* ─── AUTHORITY CTA ─── */}
       <section className="bg-ink border-t border-white/[0.04] py-24 px-8 md:px-12">
         <div className="max-w-[1100px] mx-auto">
-          <div className="bg-panel border border-brand/15 p-16 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-12 items-center">
+          <div className="bg-panel border border-brand/15 p-8 md:p-16 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-12 items-center">
             <div>
               <p className="font-data text-[11px] tracking-[3px] text-brand uppercase mb-3">FOR EMERGENCY SERVICES</p>
               <h2
@@ -429,7 +433,7 @@ export default function LandingPage() {
           </Link>
 
           {/* Links */}
-          <div className="flex gap-6 flex-wrap">
+          <div className="flex gap-4 sm:gap-6 flex-wrap justify-start sm:justify-end">
             {([
               ['Live Map',         '/map'],
               ['Report Incident',  '/report'],

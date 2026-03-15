@@ -265,7 +265,7 @@ export function PlatformFeatures() {
                   BUILT FOR<br />REAL EMERGENCIES
                 </h2>
               </div>
-              <div className="flex items-center gap-2 font-data text-[10px] tracking-[2px] text-fog">
+              <div className="hidden sm:flex items-center gap-2 font-data text-[10px] tracking-[2px] text-fog">
                 <span className="text-brand">▓▓▓▓▓▓</span>
                 <span>6 CAPABILITIES ACTIVE</span>
               </div>
@@ -436,7 +436,7 @@ export function PlatformFeatures() {
                   <span className="text-brand">REPORT.</span>
                 </h2>
               </div>
-              <div className="text-right">
+              <div className="hidden sm:block text-right shrink-0">
                 <div className="font-data text-[10px] tracking-[2px] text-brand mb-1">1 LIVE</div>
                 <div className="font-data text-[10px] tracking-[2px] text-fog">6 COMING SOON</div>
               </div>
@@ -478,8 +478,8 @@ export function PlatformFeatures() {
                     push notifications, and tracking — available now, on every device.
                   </p>
 
-                  {/* Steps */}
-                  <ol className="flex flex-col sm:flex-row gap-3 sm:gap-0 list-none m-0 p-0">
+                  {/* Steps — vertical on mobile/tablet, horizontal on desktop */}
+                  <ol className="flex flex-col md:flex-row gap-3 md:gap-0 list-none m-0 p-0">
                     {CHANNELS[0].steps.map((step, si) => (
                       <li key={si} className="flex items-center gap-2">
                         <span className="flex items-center gap-2">
@@ -489,7 +489,7 @@ export function PlatformFeatures() {
                           <span className="font-body text-[13px] text-snow">{step}</span>
                         </span>
                         {si < CHANNELS[0].steps.length - 1 && (
-                          <span className="font-data text-brand/40 text-[12px] mx-2 hidden sm:block">——</span>
+                          <span className="font-data text-brand/40 text-[12px] mx-2 hidden md:block">——</span>
                         )}
                       </li>
                     ))}
@@ -497,7 +497,7 @@ export function PlatformFeatures() {
                 </div>
 
                 {/* CTA */}
-                <div className="flex flex-col items-start md:items-end gap-4">
+                <div className="flex flex-col items-start gap-4 md:items-end md:text-right">
                   <Link
                     href="/report"
                     className="font-condensed font-bold text-[15px] tracking-[2px] text-ink bg-brand uppercase px-8 py-4 rounded-[4px] whitespace-nowrap shadow-[0_4px_24px_rgba(212,255,0,0.3)] transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(212,255,0,0.5)]"
@@ -516,10 +516,10 @@ export function PlatformFeatures() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-0.5">
             {CHANNELS.slice(1).map((ch, i) => (
               <FadeUp key={ch.id} delay={i * 80}>
-                <div className="relative bg-ink overflow-hidden group h-full">
+                <div className="relative bg-ink overflow-hidden group h-full min-h-[240px]">
 
-                  {/* COMING SOON badge — top right */}
-                  <div className="absolute top-4 right-4 z-20 font-data text-[9px] tracking-[2px] text-fog border border-fog/20 px-2 py-1 uppercase">
+                  {/* COMING SOON badge — sits in flow at top, not absolute, so it never overlaps */}
+                  <div className="absolute top-4 right-4 z-20 font-data text-[9px] tracking-[2px] text-fog/70 border border-fog/20 px-2 py-[3px] uppercase leading-none">
                     COMING SOON
                   </div>
 
