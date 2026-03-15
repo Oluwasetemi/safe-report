@@ -9,6 +9,7 @@ import { DiscreetModeToggle } from '@/components/report/discreet-mode-toggle'
 import { DiscreetOverlay } from '@/components/report/discreet-overlay'
 import { VoiceInput } from '@/components/safe-guide/voice-input'
 import type { Category, Severity } from '@/lib/types'
+import { TourProvider } from '@/components/tour/tour-provider'
 
 type Step = 'category' | 'location' | 'description' | 'classify' | 'review'
 
@@ -127,6 +128,7 @@ export default function ReportPage() {
   const visualIndex = step === 'classify' ? 3 : visualSteps.indexOf(step)
 
   return (
+    <TourProvider page="report">
     <main style={{ minHeight: '100vh', background: 'var(--surface-base)', color: 'var(--text-primary)', maxWidth: 600, margin: '0 auto', padding: 24 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <button
@@ -146,14 +148,14 @@ export default function ReportPage() {
         </h1>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 32 }}>
+      <div data-tour="tour-report-progress" style={{ display: 'flex', gap: 4, marginBottom: 32 }}>
         {visualSteps.map((_, i) => (
           <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= visualIndex ? 'var(--brand-primary)' : 'var(--border)' }} />
         ))}
       </div>
 
       {step === 'category' && (
-        <div>
+        <div data-tour="tour-category">
           <h2 style={{ fontFamily: 'var(--font-barlow-condensed)', marginBottom: 16 }}>What happened?</h2>
           <CategoryPicker value={category} onChange={(c) => { setCategory(c); setStep('location') }} />
         </div>
@@ -289,5 +291,6 @@ export default function ReportPage() {
 
       {discreetMode && <DiscreetOverlay onExit={() => setDiscreetMode(false)} />}
     </main>
+    </TourProvider>
   )
 }
