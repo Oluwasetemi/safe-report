@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// Mock the bot module
+const mockHandleUpdate = vi.fn().mockResolvedValue(undefined)
+
+// Mock the bot module — getBot() returns an object with handleUpdate
 vi.mock('@/lib/telegram/bot', () => ({
-  bot: {
-    handleUpdate: vi.fn().mockResolvedValue(undefined),
-  },
+  getBot: () => ({
+    handleUpdate: mockHandleUpdate,
+  }),
 }))
 
 // Mock env
@@ -49,8 +51,7 @@ describe('POST /api/telegram/webhook', () => {
   })
 
   it('returns 200 even when bot.handleUpdate throws', async () => {
-    const { bot } = await import('@/lib/telegram/bot')
-    vi.mocked(bot.handleUpdate).mockRejectedValueOnce(new Error('bot exploded'))
+    mockHandleUpdate.mockRejectedValueOnce(new Error('bot exploded'))
 
     const req = makeRequest('test-secret-abc', { update_id: 2 })
     const res = await POST(req as never)

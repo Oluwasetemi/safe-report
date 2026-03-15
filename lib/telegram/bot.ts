@@ -50,50 +50,60 @@ async function handleLeaderboard(ctx: BotContext) {
 
 // ── Bot instance ───────────────────────────────────────────────────────────
 
-const token = process.env.TELEGRAM_BOT_TOKEN
-if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not set')
+// Lazily initialised so that Next.js build-time page data collection does not
+// throw when TELEGRAM_BOT_TOKEN is absent from the build environment.
+let _bot: Bot<BotContext> | null = null
 
-export const bot = new Bot<BotContext>(token)
+export function getBot(): Bot<BotContext> {
+  if (_bot) return _bot
 
-// 1. Session — persists conversation state in Supabase telegram_sessions table
-// getSessionKey returns undefined for updates without a chat (inline queries,
-// channel posts) — grammY safely skips session middleware for those.
-bot.use(session({
-  storage: createStorageAdapter(),
-  getSessionKey: ctx => ctx.chat?.id != null ? String(ctx.chat.id) : undefined,
-  initial: (): SessionData => ({}),
-}))
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) throw new Error('TELEGRAM_BOT_TOKEN is not set')
 
-// 2. Conversations plugin — MUST come before createConversation registrations
-bot.use(conversations())
+  _bot = new Bot<BotContext>(token)
 
-// 3. Register conversation functions — MUST use bot.use(createConversation(...))
-bot.use(createConversation(reportConversation, 'report'))
-bot.use(createConversation(statusConversation, 'status'))
+  // 1. Session — persists conversation state in Supabase telegram_sessions table
+  // getSessionKey returns undefined for updates without a chat (inline queries,
+  // channel posts) — grammY safely skips session middleware for those.
+  _bot.use(session({
+    storage: createStorageAdapter(),
+    getSessionKey: ctx => ctx.chat?.id != null ? String(ctx.chat.id) : undefined,
+    initial: (): SessionData => ({}),
+  }))
 
-// 4. /start — always exits any active conversation then shows menu
-bot.command('start', async ctx => {
-  await ctx.conversation.exitAll()  // no-op if none active; exits all active conversations
-  await sendMainMenu(ctx)
-})
+  // 2. Conversations plugin — MUST come before createConversation registrations
+  _bot.use(conversations())
 
-// 5. Callback query handlers — enter conversations or handle inline
-bot.callbackQuery('menu:report', async ctx => {
-  await ctx.answerCallbackQuery()
-  await ctx.conversation.enter('report')
-})
+  // 3. Register conversation functions — MUST use bot.use(createConversation(...))
+  _bot.use(createConversation(reportConversation, 'report'))
+  _bot.use(createConversation(statusConversation, 'status'))
 
-bot.callbackQuery('menu:status', async ctx => {
-  await ctx.answerCallbackQuery()
-  await ctx.conversation.enter('status')
-})
+  // 4. /start — always exits any active conversation then shows menu
+  _bot.command('start', async ctx => {
+    await ctx.conversation.exitAll()  // no-op if none active; exits all active conversations
+    await sendMainMenu(ctx)
+  })
 
-bot.callbackQuery('menu:leaderboard', async ctx => {
-  await ctx.answerCallbackQuery()
-  await handleLeaderboard(ctx)
-})
+  // 5. Callback query handlers — enter conversations or handle inline
+  _bot.callbackQuery('menu:report', async ctx => {
+    await ctx.answerCallbackQuery()
+    await ctx.conversation.enter('report')
+  })
 
-// 6. Fallback — any message outside an active conversation shows the menu
-bot.on('message', async ctx => {
-  await sendMainMenu(ctx)
-})
+  _bot.callbackQuery('menu:status', async ctx => {
+    await ctx.answerCallbackQuery()
+    await ctx.conversation.enter('status')
+  })
+
+  _bot.callbackQuery('menu:leaderboard', async ctx => {
+    await ctx.answerCallbackQuery()
+    await handleLeaderboard(ctx)
+  })
+
+  // 6. Fallback — any message outside an active conversation shows the menu
+  _bot.on('message', async ctx => {
+    await sendMainMenu(ctx)
+  })
+
+  return _bot
+}

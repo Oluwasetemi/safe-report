@@ -1,6 +1,6 @@
 // app/api/telegram/webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { bot } from '@/lib/telegram/bot'
+import { getBot } from '@/lib/telegram/bot'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const update = await req.json()
-    await bot.handleUpdate(update)
+    await getBot().handleUpdate(update)
   } catch (err) {
     console.error('[tg/webhook] unhandled error:', err)
   }
