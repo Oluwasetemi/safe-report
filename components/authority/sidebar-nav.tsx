@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { usePushSubscription } from '@/hooks/use-push-subscription'
 
 interface NavItem {
   href: string
@@ -21,11 +22,13 @@ interface SidebarNavProps {
   orgName: string
   userName: string
   unreadCount?: number
+  orgId?: string
 }
 
-export function SidebarNav({ orgName, userName, unreadCount = 0 }: SidebarNavProps) {
+export function SidebarNav({ orgName, userName, unreadCount = 0, orgId }: SidebarNavProps) {
   const pathname = usePathname()
   const router = useRouter()
+  const push = usePushSubscription({ type: 'authority', org_id: orgId })
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -75,6 +78,14 @@ export function SidebarNav({ orgName, userName, unreadCount = 0 }: SidebarNavPro
             </Link>
           )
         })}
+        {push.status !== 'unsupported' && (
+          <button
+            onClick={push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg text-gray-600 hover:bg-gray-100"
+          >
+            {push.status === 'subscribed' ? '🔔 Push on' : '🔔 Enable push alerts'}
+          </button>
+        )}
       </nav>
 
       {/* User + sign out */}
