@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
       lng,
       aiSummary:  finalClassification.aiSummary,
       timestamp:  report.created_at,
-      mapUrl:     `/incidents/${report.id}`,
+      mapUrl:     `/report/${report.id}`,
       respondUrl: '/authority/login',
     }
 

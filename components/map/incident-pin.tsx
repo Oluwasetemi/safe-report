@@ -78,7 +78,7 @@ export function IncidentPin({ report, onCorroborate }: IncidentPinProps) {
             {report.address} · {report.corroboration_count} confirmations
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link href={`/incidents/${report.id}`}
+            <Link href={`/report/${report.id}`}
               style={{ fontSize: 12, color: '#D4FF00', background: '#0A0A0A', padding: '4px 8px', textDecoration: 'none' }}>
               Details
             </Link>

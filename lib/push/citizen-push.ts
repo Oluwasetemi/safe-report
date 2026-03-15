@@ -36,7 +36,7 @@ export async function citizenPush(report: Report): Promise<void> {
       sendPushNotification(sub, {
         title: `${report.severity === 'CRITICAL' ? '🚨' : report.severity === 'HIGH' ? '🔥' : '⚠️'} ${report.severity}: ${report.category.replaceAll('_', ' ')} reported ${distanceLabel(sub)} from you`,
         body: report.ai_summary ?? report.description.slice(0, 100),
-        data: { url: `/incidents/${report.id}` },
+        data: { url: `/report/${report.id}` },
       })
     )
   )
