@@ -165,6 +165,36 @@ const CHANNELS: Channel[] = [
     steps: ['Call SafeReport line', 'State location + incident', 'AI transcribes instantly'],
     live: false,
   },
+  {
+    id: 'authority',
+    icon: '🏛',
+    name: 'Authority Partnership',
+    tagline: 'Integrated agency reporting',
+    description: 'Verified government agencies and NGOs submit incident data directly into SafeReport, enriching the map with official ground-truth reports.',
+    steps: ['Agency onboarding & verification', 'Submit via secure portal', 'Data merged into public feed'],
+    hint: 'Partners: JCF · ODPEM · NWA · JPS',
+    live: false,
+  },
+  {
+    id: 'api',
+    icon: '⚡',
+    name: 'Public API',
+    tagline: 'Programmatic incident submission',
+    description: 'REST API for third-party apps, news platforms, and civic-tech developers to read the incident feed or submit verified reports.',
+    steps: ['Request API key', 'POST /api/v1/reports', 'Receive ticket + webhook URL'],
+    hint: 'api.safereport.gov.jm/v1',
+    live: false,
+  },
+  {
+    id: 'webhooks',
+    icon: '🔗',
+    name: 'Webhooks',
+    tagline: 'Real-time event delivery',
+    description: 'Subscribe to incident events — new reports, status changes, resolutions — delivered as signed JSON payloads to your endpoint within seconds.',
+    steps: ['Register endpoint URL', 'Select event types', 'Receive signed payloads'],
+    hint: 'HMAC-SHA256 signed · TLS only',
+    live: false,
+  },
 ]
 
 // ── Sub-components ────────────────────────────────────────
@@ -432,13 +462,13 @@ export function PlatformFeatures() {
                   className="font-condensed font-bold uppercase text-snow leading-[0.95] m-0 tracking-[-0.5px]"
                   style={{ fontSize: 'clamp(36px, 5vw, 60px)' }}
                 >
-                  7 WAYS TO<br />
+                  10 WAYS TO<br />
                   <span className="text-brand">REPORT.</span>
                 </h2>
               </div>
               <div className="hidden sm:block text-right shrink-0">
                 <div className="font-data text-[10px] tracking-[2px] text-brand mb-1">3 LIVE</div>
-                <div className="font-data text-[10px] tracking-[2px] text-fog">4 COMING SOON</div>
+                <div className="font-data text-[10px] tracking-[2px] text-fog">7 COMING SOON</div>
               </div>
             </div>
           </FadeUp>
@@ -579,7 +609,7 @@ export function PlatformFeatures() {
           {/* Footer note */}
           <FadeUp delay={300}>
             <p className="font-data text-[10px] tracking-[1.5px] text-fog/40 text-center mt-8 uppercase">
-              WhatsApp · SMS · USSD · Voice IVR — launching 2025 · notify me at alerts@safereport.gov.jm
+              WhatsApp · SMS · USSD · Voice IVR · Authority Partnership · Public API · Webhooks — launching 2025 · notify me at alerts@safereport.gov.jm
             </p>
           </FadeUp>
         </div>
