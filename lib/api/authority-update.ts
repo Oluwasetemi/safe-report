@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '../supabase/server'
 import type { ReportStatus } from '../types'
 import { NextRequest, NextResponse } from 'next/server'
+import { authorityPush } from '../push/authority-push'
 
 export async function applyStatusUpdate(
   req: NextRequest,
@@ -58,6 +59,12 @@ export async function applyStatusUpdate(
     method: 'POST',
     body: JSON.stringify({ type: 'INCIDENT_UPDATED', incident: report }),
   }).catch(() => {})
+
+  if (status === 'acknowledged' || status === 'en_route') {
+    authorityPush(authorityUser.org_id, report).catch((e) =>
+      console.error('[push] authorityPush error:', e)
+    )
+  }
 
   return NextResponse.json({ success: true, report })
 }

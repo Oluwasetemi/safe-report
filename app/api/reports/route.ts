@@ -9,6 +9,8 @@ import { sendSMS } from '@/lib/alerts/sms'
 import { sendWhatsApp } from '@/lib/alerts/whatsapp'
 import { sendEmail } from '@/lib/alerts/email'
 import type { AlertPayload } from '@/lib/types'
+import { citizenPush } from '@/lib/push/citizen-push'
+import { authorityPush } from '@/lib/push/authority-push'
 
 const REPORT_TTL_HOURS: Record<string, number> = {
   CRITICAL: 48,
@@ -154,6 +156,15 @@ export async function POST(req: NextRequest) {
           alerts_sent_at: new Date().toISOString(),
         })
         .eq('id', report.id)
+    }
+
+    // Fire push notifications (non-blocking)
+    citizenPush(report).catch((e) => console.error('[push] citizenPush error:', e))
+
+    if (departments?.length) {
+      for (const dept of departments) {
+        authorityPush(dept.id, report).catch((e) => console.error('[push] authorityPush error:', e))
+      }
     }
 
     return NextResponse.json({
