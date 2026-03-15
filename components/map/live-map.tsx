@@ -50,10 +50,8 @@ export function LiveMap({ userLat, userLng, authorityMode }: LiveMapProps) {
       zoomControl={false}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        subdomains="abcd"
-        maxZoom={20}
+        attribution='&copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {(userLat && userLng) && <MapRecenter lat={userLat} lng={userLng} />}
       {/* Non-crime incidents: always show as pins */}

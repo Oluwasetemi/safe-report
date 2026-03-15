@@ -2,6 +2,9 @@
   "name": "safe-report",
   "main": "party/map.ts",
   "compatibilityDate": "2026-03-15",
+  "vars": {
+    "SUPABASE_URL": "https://qmdsbfkxbaitpqlwhifp.supabase.co"
+  },
   "parties": {
     "map": "party/map.ts",
     "authority": "party/authority.ts",
