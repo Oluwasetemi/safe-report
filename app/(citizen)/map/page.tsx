@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { MapControls } from '@/components/map/map-controls'
@@ -37,11 +38,17 @@ export default function LiveMapPage() {
   return (
     <main style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       <LiveMap userLat={userLat} userLng={userLng} />
+      <Link
+        href="/"
+        className="absolute top-4 left-4 z-[1000] flex items-center gap-1.5 bg-[#111318]/90 backdrop-blur-sm border border-white/10 rounded-full px-3 py-2 text-sm text-white/80 hover:text-white hover:border-white/30 transition-colors shadow-md"
+      >
+        ← Home
+      </Link>
       {push.status !== 'unsupported' && (
         <button
           onClick={push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
           title={push.status === 'denied' ? 'Add to home screen to enable notifications on iOS' : undefined}
-          className="absolute top-4 right-4 z-[1000] bg-white rounded-full px-3 py-2 text-sm shadow-md border border-gray-200"
+          className="absolute top-4 right-4 z-[1000] bg-white rounded-full px-3 py-2 text-sm text-black shadow-md border border-gray-200"
         >
           {push.status === 'subscribed' ? '🔔 Alerts on' : push.status === 'denied' ? '🔕 Blocked' : '🔔 Nearby alerts'}
         </button>
