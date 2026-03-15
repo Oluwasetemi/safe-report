@@ -1,4 +1,15 @@
+import type { Metadata } from 'next'
 import { LoginForm } from '@/components/authority/login-form'
+
+export const metadata: Metadata = {
+  title: 'Authority Portal Login',
+  description: 'Secure login for JCF, JFB, NAS, ODPEM, NWA, and JPS authority officers.',
+  openGraph: {
+    title: 'Authority Portal | SafeReport',
+    description: 'Secure triage dashboard for emergency authority officers across Jamaica.',
+    images: [{ url: '/api/og?title=AUTHORITY+PORTAL&description=Triage+dashboard+for+JCF%2C+JFB%2C+NAS%2C+ODPEM%2C+NWA%2C+and+JPS+officers.', width: 1200, height: 630 }],
+  },
+}
 
 export default function AuthorityLoginPage() {
   return (

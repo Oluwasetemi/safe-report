@@ -1,4 +1,19 @@
+import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  title: 'Transparency Report',
+  description: 'Open data on incident response times, resolution rates, and category breakdowns across Jamaica.',
+  openGraph: {
+    title: 'Transparency Report | SafeReport',
+    description: 'Open data on incident response times, resolution rates, and category breakdowns across all 14 parishes.',
+    images: [{ url: '/api/og?title=TRANSPARENCY+REPORT&description=Open+data+on+incident+response+times+and+resolution+rates+across+Jamaica.', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/api/og?title=TRANSPARENCY+REPORT&description=Open+data+on+incident+response+times+and+resolution+rates+across+Jamaica.'],
+  },
+}
 
 export default async function TransparencyPage() {
   const supabase = await createServerSupabaseClient()

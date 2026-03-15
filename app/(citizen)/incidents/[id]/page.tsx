@@ -1,6 +1,33 @@
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { StatusTracker } from '@/components/incident/status-tracker'
+
+export async function generateMetadata({ params: paramsPromise }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await paramsPromise
+  const supabase = await createServerSupabaseClient()
+  const { data: report } = await supabase.from('reports').select('ai_summary,description,category,severity,address').eq('id', params.id).single()
+
+  if (!report) return { title: 'Incident | SafeReport' }
+
+  const category = report.category.replace(/_/g, ' ').toUpperCase()
+  const title = `${report.severity}: ${category}`
+  const description = report.ai_summary ?? report.description ?? `${category} incident in Jamaica`
+  const address = report.address ?? 'Jamaica'
+  const parish = address.split(',').at(-1)?.trim() ?? 'Jamaica'
+  const ogUrl = `/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&severity=${report.severity}&parish=${encodeURIComponent(parish)}`
+
+  return {
+    title: `${category} — ${address}`,
+    description,
+    openGraph: {
+      title: `${title} | SafeReport`,
+      description,
+      images: [{ url: ogUrl, width: 1200, height: 630 }],
+    },
+    twitter: { card: 'summary_large_image', images: [ogUrl] },
+  }
+}
 
 export default async function IncidentDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = await paramsPromise
