@@ -19,5 +19,5 @@ export async function POST(req: NextRequest) {
     messages,
   })
 
-  return result.toDataStreamResponse()
+  return result.toTextStreamResponse()
 }

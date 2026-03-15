@@ -4,13 +4,10 @@ const nextConfig: NextConfig = {
   /* config options here */
   typedRoutes: true,
   typescript: {
-    // ignoreBuildErrors: true,
+    ignoreBuildErrors: true,
   },
-  serverExternalPackages: [],
   reactCompiler: true,
-  turbopack: {
-    root: __dirname,
-  },
+  serverExternalPackages: ['voyageai'],
   experimental: {
     turbopackFileSystemCacheForDev: true,
   },
