@@ -25,7 +25,11 @@ const RATE_LIMIT_MAX = 5
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { description, lat, lng, rawFingerprint, photoUrl, voiceTranscript } = body
+    const { description, lat, lng, rawFingerprint, photoUrl, photoUrls, voiceTranscript } = body
+    // Prefer the full array; fall back to single URL for backwards compat
+    const allPhotoUrls: string[] = Array.isArray(photoUrls) && photoUrls.length
+      ? photoUrls
+      : photoUrl ? [photoUrl] : []
 
     // Validate required fields
     if (!description || typeof lat !== 'number' || typeof lng !== 'number') {
@@ -92,7 +96,7 @@ export async function POST(req: NextRequest) {
         address,
         parish,
         description,
-        photo_url:           photoUrl,
+        photo_url:           allPhotoUrls.length ? JSON.stringify(allPhotoUrls) : null,
         voice_transcript:    voiceTranscript,
         category:            finalClassification.category,
         subcategory:         finalClassification.subcategory,
@@ -112,11 +116,15 @@ export async function POST(req: NextRequest) {
 
     // Get departments to alert
     const deptTypes = getDepartmentsForCategory(finalClassification.category)
-    const { data: departments } = await supabase
+    const { data: departments, error: deptError } = await supabase
       .from('authority_organizations')
       .select('*')
       .in('type', deptTypes)
       .contains('parish', parish ? [parish] : [])
+
+    console.log(`[alerts] category=${finalClassification.category} parish="${parish}" deptTypes=${JSON.stringify(deptTypes)} matched=${departments?.length ?? 0}`)
+    if (deptError) console.error('[alerts] dept query error:', deptError)
+    if (departments?.length) console.log('[alerts] targets:', departments.map((d: { name: string; alert_phone?: string; alert_email?: string }) => `${d.name} phone=${d.alert_phone ?? 'none'} email=${d.alert_email ?? 'none'}`))
 
     const alertPayload: AlertPayload = {
       reportId:   report.id,
