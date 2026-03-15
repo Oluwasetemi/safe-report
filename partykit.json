@@ -6,5 +6,8 @@
     "map": "party/map.ts",
     "authority": "party/authority.ts",
     "incident": "party/incident.ts"
+  },
+  "vars": {
+    "SUPABASE_URL": "https://qmdsbfkxbaitpqlwhifp.supabase.co"
   }
 }
