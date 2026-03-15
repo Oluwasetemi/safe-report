@@ -178,6 +178,7 @@ export async function reportConversation(
     classification = await classifyReport({ description, parish, lat, lng })
   } catch {
     await ctx.reply('⚠️ Failed to process your report. Please try again.')
+    await sendMainMenuMessage(ctx)
     return
   }
 
@@ -208,6 +209,7 @@ export async function reportConversation(
 
   if ((count ?? 0) >= 5) {
     await ctx.reply('⚠️ Too many reports submitted recently. Please wait a few minutes.')
+    await sendMainMenuMessage(ctx)
     return
   }
 
@@ -239,6 +241,7 @@ export async function reportConversation(
 
   if (insertError) {
     await ctx.reply('⚠️ Failed to save your report. Please try again.')
+    await sendMainMenuMessage(ctx)
     return
   }
 
