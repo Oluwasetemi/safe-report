@@ -11,6 +11,7 @@ export function MapControls({ onReportClick, onLocateClick, onGuideClick }: MapC
     <>
       {/* Report FAB — bottom center */}
       <button
+        data-tour="tour-report-fab"
         onClick={onReportClick}
         style={{
           position:     'fixed',
@@ -36,6 +37,7 @@ export function MapControls({ onReportClick, onLocateClick, onGuideClick }: MapC
 
       {/* SafeGuide FAB — bottom right */}
       <button
+        data-tour="tour-safeguide"
         onClick={onGuideClick}
         style={{
           position:     'fixed',
