@@ -1,4 +1,3 @@
-import { webpush } from './vapid'
 import { createServiceSupabaseClient } from '../supabase/server'
 import type { PushSubscriptionRow } from '../types'
 
@@ -15,6 +14,7 @@ export async function sendPushNotification(
   sub: PushSubscriptionRow,
   payload: PushPayload
 ): Promise<void> {
+  const { webpush } = await import('./vapid')
   try {
     await webpush.sendNotification(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
@@ -23,7 +23,6 @@ export async function sendPushNotification(
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode
     if (status === 410 || status === 404) {
-      // Subscription expired — remove from DB
       const supabase = createServiceSupabaseClient()
       await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
     } else {
