@@ -18,7 +18,7 @@ export async function sendPushNotification(
   try {
     await webpush.sendNotification(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-      JSON.stringify({ icon: '/icon-192.png', badge: '/badge-72.png', ...payload })
+      JSON.stringify({ icon: '/icon-192.svg', badge: '/badge-72.svg', ...payload })
     )
   } catch (err: unknown) {
     const status = (err as { statusCode?: number }).statusCode
