@@ -52,6 +52,9 @@ export function useRealtimeMap() {
             )
           )
         }
+
+        // STATUS_UPDATE and PROXIMITY_ALERT are handled in useRealtimeIncident
+        // and are not relevant to the global map room
       } catch {
         // ignore malformed messages
       }

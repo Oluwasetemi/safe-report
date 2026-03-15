@@ -28,6 +28,10 @@ const mockReport: Report = {
 }
 
 describe('useRealtimeMap', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
   it('initializes with empty incidents', async () => {
     const { usePartySocket } = await import('partysocket/react')
     vi.mocked(usePartySocket).mockReturnValue(null as never)
@@ -56,5 +60,67 @@ describe('useRealtimeMap', () => {
 
     expect(result.current.incidents).toHaveLength(1)
     expect(result.current.incidents[0].id).toBe('uuid-1')
+  })
+
+  it('sets full list on SNAPSHOT event', async () => {
+    let capturedOnMessage: ((msg: MessageEvent) => void) | undefined
+
+    const { usePartySocket } = await import('partysocket/react')
+    vi.mocked(usePartySocket).mockImplementation(({ onMessage }: { onMessage?: (msg: MessageEvent) => void }) => {
+      capturedOnMessage = onMessage
+      return null as never
+    })
+
+    const { useRealtimeMap } = await import('../use-realtime-map')
+    const { result } = renderHook(() => useRealtimeMap())
+
+    const snapshotIncidents = [mockReport, { ...mockReport, id: 'uuid-2' }]
+
+    act(() => {
+      capturedOnMessage?.({
+        data: JSON.stringify({ type: 'SNAPSHOT', incidents: snapshotIncidents } satisfies ServerEvent),
+      } as MessageEvent)
+    })
+
+    expect(result.current.incidents).toHaveLength(2)
+    expect(result.current.incidents).toEqual(snapshotIncidents)
+  })
+
+  it('updates confidence_score and corroboration_count on INCIDENT_CORROBORATED event', async () => {
+    let capturedOnMessage: ((msg: MessageEvent) => void) | undefined
+
+    const { usePartySocket } = await import('partysocket/react')
+    vi.mocked(usePartySocket).mockImplementation(({ onMessage }: { onMessage?: (msg: MessageEvent) => void }) => {
+      capturedOnMessage = onMessage
+      return null as never
+    })
+
+    const { useRealtimeMap } = await import('../use-realtime-map')
+    const { result } = renderHook(() => useRealtimeMap())
+
+    // First add an incident
+    act(() => {
+      capturedOnMessage?.({
+        data: JSON.stringify({ type: 'INCIDENT_CREATED', incident: mockReport } satisfies ServerEvent),
+      } as MessageEvent)
+    })
+
+    expect(result.current.incidents[0].confidence_score).toBe(0.8)
+    expect(result.current.incidents[0].corroboration_count).toBe(0)
+
+    // Then update it with corroboration
+    act(() => {
+      capturedOnMessage?.({
+        data: JSON.stringify({
+          type: 'INCIDENT_CORROBORATED',
+          incidentId: 'uuid-1',
+          confidenceScore: 0.95,
+          count: 3,
+        } satisfies ServerEvent),
+      } as MessageEvent)
+    })
+
+    expect(result.current.incidents[0].confidence_score).toBe(0.95)
+    expect(result.current.incidents[0].corroboration_count).toBe(3)
   })
 })
