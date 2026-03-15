@@ -5,6 +5,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
+import { TourProvider } from '@/components/tour/tour-provider'
+import { TourButton } from '@/components/tour/tour-button'
+
 // Leaflet must be client-only
 const LiveMap = dynamic(
   () => import('@/components/map/live-map').then((m) => m.LiveMap),
@@ -115,6 +118,7 @@ export default function LandingPage() {
   }, [])
 
   return (
+    <TourProvider page="landing">
     <div className="bg-ink min-h-screen text-snow">
 
       {/* ─── NAV ─── */}
@@ -160,6 +164,7 @@ export default function LandingPage() {
               </Link>
             ))}
           </div>
+          <TourButton />
           <Link
             href="/authority/login"
             className="font-condensed font-bold text-[13px] tracking-[2px] text-ink bg-brand uppercase px-4 md:px-5 py-[9px] rounded-[4px] ml-2 transition-[background,transform] duration-150 hover:bg-brand-dark hover:-translate-y-px"
@@ -171,7 +176,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section className="relative w-full h-screen min-h-[640px] overflow-hidden">
+      <section data-tour="tour-hero" className="relative w-full h-screen min-h-[640px] overflow-hidden">
 
         {/* Live map — full bleed background */}
         <div className="absolute inset-0 z-[1]">
@@ -229,6 +234,7 @@ export default function LandingPage() {
               VIEW LIVE MAP →
             </Link>
             <Link
+              data-tour="tour-report-cta"
               href="/report"
               className="font-condensed font-bold text-[16px] tracking-[2px] text-brand uppercase px-8 py-[13px] rounded-[4px] inline-block border border-brand/40 transition-[border-color,background] duration-150 hover:border-brand hover:bg-brand/[0.08]"
             >
@@ -252,7 +258,7 @@ export default function LandingPage() {
         </div>
 
         {/* Incident ticker */}
-        <div className="absolute bottom-0 inset-x-0 z-[5] bg-ink/92 border-t border-brand/15 h-11 overflow-hidden flex items-center">
+        <div data-tour="tour-ticker" className="absolute bottom-0 inset-x-0 z-[5] bg-ink/92 border-t border-brand/15 h-11 overflow-hidden flex items-center">
           <div
             className="flex items-center whitespace-nowrap"
             style={{ animation: 'ticker 40s linear infinite' }}
@@ -279,7 +285,7 @@ export default function LandingPage() {
       <PlatformFeatures />
 
       {/* ─── HOW IT WORKS ─── */}
-      <section className="bg-navy border-t border-white/[0.04] py-24 px-8 md:px-12">
+      <section data-tour="tour-how-it-works" className="bg-navy border-t border-white/[0.04] py-24 px-8 md:px-12">
         <div className="max-w-[1100px] mx-auto">
 
           <div className="mb-16">
@@ -461,5 +467,6 @@ export default function LandingPage() {
       </footer>
 
     </div>
+    </TourProvider>
   )
 }
