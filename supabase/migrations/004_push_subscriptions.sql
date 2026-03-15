@@ -22,3 +22,15 @@ ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "deny_public_read_push_subscriptions"
   ON push_subscriptions FOR SELECT
   USING (false);
+
+CREATE POLICY "deny_public_write_push_subscriptions"
+  ON push_subscriptions FOR INSERT
+  WITH CHECK (false);
+
+CREATE POLICY "deny_public_update_push_subscriptions"
+  ON push_subscriptions FOR UPDATE
+  USING (false);
+
+CREATE POLICY "deny_public_delete_push_subscriptions"
+  ON push_subscriptions FOR DELETE
+  USING (false);
