@@ -40,7 +40,7 @@ export function SafeGuideChat({ onClose }: SafeGuideChatProps) {
       .join('')
   }
 
-  // Text-to-speech for assistant messages — only when streaming is complete
+  // Text-to-speech for assistant messages — Easy-Peasy.AI Jamaican voice (Nicole)
   const spokenIdRef = useRef<string | null>(null)
   useEffect(() => {
     if (isLoading) return
@@ -48,13 +48,20 @@ export function SafeGuideChat({ onClose }: SafeGuideChatProps) {
     if (lastMsg?.role !== 'assistant') return
     if (spokenIdRef.current === lastMsg.id) return
     const text = getMessageText(lastMsg)
-    if (!text || !('speechSynthesis' in window)) return
+    if (!text) return
     spokenIdRef.current = lastMsg.id
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-JM'
-    utterance.rate = 0.9
-    window.speechSynthesis.speak(utterance)
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+      .then((r) => r.json())
+      .then(({ url }: { url?: string }) => {
+        if (url) new Audio(url).play()
+      })
+      .catch(() => {
+        // Silent fallback — text remains readable on screen
+      })
   }, [messages, isLoading])
 
   return (
