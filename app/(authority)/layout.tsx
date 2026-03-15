@@ -29,6 +29,7 @@ export default async function AuthorityLayout({ children }: { children: React.Re
         orgName={authorityUser.org?.name ?? 'Authority'}
         userName={authorityUser.name}
         unreadCount={unreadCount ?? 0}
+        orgId={authorityUser.org?.id}
       />
       <main style={{ flex: 1, overflow: 'auto' }}>{children}</main>
     </div>

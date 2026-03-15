@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { MapControls } from '@/components/map/map-controls'
+import { usePushSubscription } from '@/hooks/use-push-subscription'
 
 // Leaflet must be client-only — no SSR
 const LiveMap = dynamic(
@@ -21,6 +22,7 @@ export default function LiveMapPage() {
   const [userLat, setUserLat] = useState<number>()
   const [userLng, setUserLng] = useState<number>()
   const [guideOpen, setGuideOpen] = useState(false)
+  const push = usePushSubscription({ type: 'citizen', lat: userLat, lng: userLng })
 
   function handleLocate() {
     navigator.geolocation.getCurrentPosition(
@@ -35,6 +37,15 @@ export default function LiveMapPage() {
   return (
     <main style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       <LiveMap userLat={userLat} userLng={userLng} />
+      {push.status !== 'unsupported' && (
+        <button
+          onClick={push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+          title={push.status === 'denied' ? 'Add to home screen to enable notifications on iOS' : undefined}
+          className="absolute top-4 right-4 z-[1000] bg-white rounded-full px-3 py-2 text-sm shadow-md border border-gray-200"
+        >
+          {push.status === 'subscribed' ? '🔔 Alerts on' : push.status === 'denied' ? '🔕 Blocked' : '🔔 Nearby alerts'}
+        </button>
+      )}
       <MapControls
         onReportClick={() => router.push('/report')}
         onLocateClick={handleLocate}
