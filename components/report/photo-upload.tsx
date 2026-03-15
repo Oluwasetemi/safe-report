@@ -3,54 +3,126 @@
 import { useState, useRef } from 'react'
 
 interface PhotoUploadProps {
-  onPhoto: (url: string) => void
+  onPhotos: (urls: string[]) => void
 }
 
-export function PhotoUpload({ onPhoto }: PhotoUploadProps) {
-  const [preview, setPreview] = useState<string | null>(null)
-  const [uploading, setUploading] = useState(false)
+interface PhotoEntry {
+  preview: string   // local data URL for instant display
+  url: string       // remote URL after upload (empty while uploading)
+  uploading: boolean
+  id: string
+}
+
+export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
+  const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
 
-  async function handleFile(file: File) {
-    setUploading(true)
-    const reader = new FileReader()
-    reader.onload = (e) => setPreview(e.target?.result as string)
-    reader.readAsDataURL(file)
-
-    const formData = new FormData()
-    formData.append('file', file)
-    const res = await fetch('/api/upload', { method: 'POST', body: formData }).catch(() => null)
-    if (res?.ok) {
-      const { url } = await res.json()
-      onPhoto(url)
-    }
-    setUploading(false)
+  function notifyParent(entries: PhotoEntry[]) {
+    const uploaded = entries.filter(p => p.url).map(p => p.url)
+    onPhotos(uploaded)
   }
+
+  async function handleFiles(files: FileList) {
+    const newEntries: PhotoEntry[] = Array.from(files).map((file) => ({
+      preview: URL.createObjectURL(file),
+      url: '',
+      uploading: true,
+      id: `${Date.now()}-${Math.random()}`,
+    }))
+
+    setPhotos(prev => {
+      const next = [...prev, ...newEntries]
+      notifyParent(next)
+      return next
+    })
+
+    // Upload each file independently
+    await Promise.all(
+      newEntries.map(async (entry, i) => {
+        const formData = new FormData()
+        formData.append('file', files[i])
+        const res = await fetch('/api/upload', { method: 'POST', body: formData }).catch(() => null)
+        const remoteUrl = res?.ok ? (await res.json()).url : ''
+
+        setPhotos(prev => {
+          const next = prev.map(p =>
+            p.id === entry.id ? { ...p, url: remoteUrl, uploading: false } : p
+          )
+          notifyParent(next)
+          return next
+        })
+      })
+    )
+  }
+
+  function remove(id: string) {
+    setPhotos(prev => {
+      const next = prev.filter(p => p.id !== id)
+      notifyParent(next)
+      return next
+    })
+  }
+
+  const anyUploading = photos.some(p => p.uploading)
 
   return (
     <div>
+      {/* Photo grid */}
+      {photos.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
+          {photos.map(photo => (
+            <div key={photo.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '1', background: 'var(--surface-card)' }}>
+              <img
+                src={photo.preview}
+                alt="Report photo"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {photo.uploading && (
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: '#fff', fontSize: 11, fontFamily: 'var(--font-barlow-condensed)' }}>UPLOADING</span>
+                </div>
+              )}
+              {!photo.uploading && (
+                <button
+                  type="button"
+                  onClick={() => remove(photo.id)}
+                  style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 12, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add more / initial button */}
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
+        multiple
         style={{ display: 'none' }}
-        onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+        onChange={(e) => e.target.files?.length && handleFiles(e.target.files)}
       />
-      {preview ? (
-        <div style={{ position: 'relative' }}>
-          <img src={preview} alt="Report photo" style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 8 }} />
-          <button onClick={() => { setPreview(null); onPhoto('') }}
-            style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(0,0,0,0.6)', color: '#fff', border: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}>
-            ✕
-          </button>
-        </div>
-      ) : (
-        <button type="button" onClick={() => inputRef.current?.click()}
-          style={{ width: '100%', padding: 24, background: 'var(--surface-card)', border: '1px dashed var(--border)', borderRadius: 8, color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'var(--font-barlow)' }}>
-          {uploading ? 'Uploading...' : '📷 Add photo (optional)'}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={anyUploading}
+        style={{
+          width: '100%',
+          padding: photos.length ? '10px' : '20px',
+          background: 'var(--surface-card)',
+          border: '1px dashed var(--border)',
+          borderRadius: 8,
+          color: anyUploading ? 'var(--text-muted)' : 'var(--text-secondary)',
+          cursor: anyUploading ? 'not-allowed' : 'pointer',
+          fontFamily: 'var(--font-barlow)',
+          fontSize: 14,
+        }}
+      >
+        {anyUploading ? 'Uploading...' : photos.length ? '+ Add more photos' : '📷 Add photos (optional)'}
+      </button>
     </div>
   )
 }
