@@ -39,9 +39,40 @@ export default class MapParty implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
   async onStart() {
-    // Restore snapshot from durable storage on (re)start
+    // Fast path: serve from storage immediately so first onConnect is never empty
     const stored = await this.room.storage.get<Report[]>(SNAPSHOT_KEY)
     this.incidents = stored ?? []
+
+    // Refresh from Supabase (source of truth) and schedule periodic sync
+    await this.syncFromSupabase()
+    await this.room.storage.setAlarm(Date.now() + SYNC_INTERVAL_MS)
+  }
+
+  private async syncFromSupabase() {
+    const supabaseUrl = this.room.env.SUPABASE_URL as string | undefined
+    const serviceRoleKey = this.room.env.SUPABASE_SERVICE_ROLE_KEY as string | undefined
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.warn('[MapParty] SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not set — skipping sync')
+      return
+    }
+
+    try {
+      const fresh = await fetchActiveReports(supabaseUrl, serviceRoleKey)
+      this.incidents = fresh
+      void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+      console.log(`[MapParty] synced ${fresh.length} active reports from Supabase`)
+    } catch (err) {
+      console.error('[MapParty] Supabase sync failed, keeping current snapshot:', err)
+    }
+  }
+
+  async alarm() {
+    await this.syncFromSupabase()
+    // Broadcast fresh snapshot to all connected clients
+    this.room.broadcast(JSON.stringify({ type: 'SNAPSHOT', incidents: this.incidents }))
+    // Reschedule — setAlarm replaces any existing alarm, no stacking
+    await this.room.storage.setAlarm(Date.now() + SYNC_INTERVAL_MS)
   }
 
   onConnect(conn: Party.Connection) {
