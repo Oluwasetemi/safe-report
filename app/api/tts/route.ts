@@ -25,25 +25,29 @@ export async function POST(req: NextRequest) {
   // Truncate silently — long AI responses still readable on screen
   const safeText = text.slice(0, MAX_TEXT_LENGTH)
 
-  const res = await fetch('https://easy-peasy.ai/api/generate-text-to-speech', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-    },
-    body: JSON.stringify({ voiceID: DEFAULT_VOICE_ID, text: safeText }),
-  })
+  try {
+    const res = await fetch('https://easy-peasy.ai/api/generate-text-to-speech', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({ voiceID: DEFAULT_VOICE_ID, text: safeText }),
+    })
 
-  if (!res.ok) {
-    const body = await res.text()
-    return NextResponse.json({ error: `TTS API error: ${body}` }, { status: 500 })
+    if (!res.ok) {
+      const body = await res.text()
+      return NextResponse.json({ error: `TTS API error: ${body}` }, { status: 500 })
+    }
+
+    const data = await res.json() as { uuid: string; url: string; status: string }
+
+    if (data.status !== 'completed') {
+      return NextResponse.json({ error: `Unexpected TTS status: ${data.status}` }, { status: 500 })
+    }
+
+    return NextResponse.json({ url: data.url })
+  } catch {
+    return NextResponse.json({ error: 'TTS request failed' }, { status: 500 })
   }
-
-  const data = await res.json() as { uuid: string; url: string; status: string }
-
-  if (data.status !== 'completed') {
-    return NextResponse.json({ error: `Unexpected TTS status: ${data.status}` }, { status: 500 })
-  }
-
-  return NextResponse.json({ url: data.url })
 }
