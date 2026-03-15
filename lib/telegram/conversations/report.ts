@@ -15,6 +15,7 @@ import { citizenPush } from '@/lib/push/citizen-push'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import type { AlertPayload, Category } from '@/lib/types'
 import type { BotContext } from '../bot'
+import { sendMainMenu } from '../menu'
 
 export const CATEGORY_MAP: Record<string, string> = {
   crime:          'crime',
@@ -155,7 +156,7 @@ export async function reportConversation(
 
   if (action === 'report:cancel') {
     await ctx.reply('Report cancelled.', { reply_markup: { remove_keyboard: true } })
-    await sendMainMenuMessage(ctx)
+    await sendMainMenu(ctx)
     return
   }
 
@@ -176,7 +177,7 @@ export async function reportConversation(
 
   if ((count ?? 0) >= 5) {
     await ctx.reply('⚠️ Too many reports submitted recently. Please wait a few minutes.')
-    await sendMainMenuMessage(ctx)
+    await sendMainMenu(ctx)
     return
   }
 
@@ -199,7 +200,7 @@ export async function reportConversation(
     classification = await classifyReport({ description, parish, lat, lng })
   } catch {
     await ctx.reply('⚠️ Failed to process your report. Please try again.')
-    await sendMainMenuMessage(ctx)
+    await sendMainMenu(ctx)
     return
   }
 
@@ -210,7 +211,7 @@ export async function reportConversation(
       p_trust_multiplier: 1.0,
     })
     await ctx.reply('ℹ️ This incident has already been reported. Your confirmation helps authorities prioritise it.')
-    await sendMainMenuMessage(ctx)
+    await sendMainMenu(ctx)
     return
   }
 
@@ -247,7 +248,7 @@ export async function reportConversation(
 
   if (insertError) {
     await ctx.reply('⚠️ Failed to save your report. Please try again.')
-    await sendMainMenuMessage(ctx)
+    await sendMainMenu(ctx)
     return
   }
 
@@ -310,17 +311,5 @@ export async function reportConversation(
     (policeRefNumber ? `\nPolice Ref: *${policeRefNumber}*` : ''),
     { parse_mode: 'Markdown' }
   )
-  await sendMainMenuMessage(ctx)
-}
-
-// Helper — avoids circular import with bot.ts
-async function sendMainMenuMessage(ctx: BotContext) {
-  const keyboard = new KB()
-    .text('📋 Report Incident', 'menu:report')
-    .text('🔍 Check Status',   'menu:status')
-    .text('🏆 Leaderboard',    'menu:leaderboard')
-  await ctx.reply(
-    '👮 *SafeReport Jamaica*\nJamaica\'s community safety network — now on Telegram.',
-    { parse_mode: 'Markdown', reply_markup: keyboard }
-  )
+  await sendMainMenu(ctx)
 }

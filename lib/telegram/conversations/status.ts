@@ -1,8 +1,8 @@
 // lib/telegram/conversations/status.ts
 import type { Conversation } from '@grammyjs/conversations'
-import { InlineKeyboard } from 'grammy'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import type { BotContext } from '../bot'
+import { sendMainMenu } from '../menu'
 
 type StatusConversation = Conversation<BotContext, BotContext>
 
@@ -10,17 +10,24 @@ export async function statusConversation(
   conversation: StatusConversation,
   ctx: BotContext
 ) {
-  await ctx.reply('Enter your ticket number (e.g. SR-20260315-XXXX):')
+  await ctx.reply('Enter your ticket number (e.g. SR-LQMCQJRK):')
 
   const msgCtx = await conversation.waitFor('message:text')
   const ticketNumber = msgCtx.message.text.trim()
 
   const supabase = createServiceSupabaseClient()
-  const { data: report } = await supabase
+  const { data: report, error: lookupError } = await supabase
     .from('reports')
     .select('ticket_number, category, address, parish, severity, status, created_at')
     .eq('ticket_number', ticketNumber)
     .single()
+
+  if (lookupError && lookupError.code !== 'PGRST116') {
+    console.error('[tg/status]', lookupError)
+    await ctx.reply('⚠️ Could not look up that ticket. Please try again later.')
+    await sendMainMenu(ctx)
+    return
+  }
 
   if (!report) {
     await ctx.reply('❌ No report found for that ticket number. Check the number and try again.')
@@ -48,12 +55,5 @@ export async function statusConversation(
   }
 
   // Always show main menu after
-  const keyboard = new InlineKeyboard()
-    .text('📋 Report Incident', 'menu:report')
-    .text('🔍 Check Status',   'menu:status')
-    .text('🏆 Leaderboard',    'menu:leaderboard')
-  await ctx.reply(
-    '👮 *SafeReport Jamaica*\nJamaica\'s community safety network — now on Telegram.',
-    { parse_mode: 'Markdown', reply_markup: keyboard }
-  )
+  await sendMainMenu(ctx)
 }

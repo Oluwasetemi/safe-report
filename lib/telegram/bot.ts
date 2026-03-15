@@ -1,9 +1,10 @@
 // lib/telegram/bot.ts
-import { Bot, InlineKeyboard, session } from 'grammy'
+import { Bot, session } from 'grammy'
 import { conversations, createConversation } from '@grammyjs/conversations'
 import type { Context, SessionFlavor } from 'grammy'
 import type { ConversationFlavor } from '@grammyjs/conversations'
 import { createStorageAdapter } from './storage'
+import { sendMainMenu } from './menu'
 import { reportConversation } from './conversations/report'
 import { statusConversation } from './conversations/status'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
@@ -19,24 +20,22 @@ export type BotContext = ConversationFlavor<BaseContext>
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-export async function sendMainMenu(ctx: BotContext) {
-  const keyboard = new InlineKeyboard()
-    .text('📋 Report Incident', 'menu:report')
-    .text('🔍 Check Status',   'menu:status')
-    .text('🏆 Leaderboard',    'menu:leaderboard')
-  await ctx.reply(
-    '👮 *SafeReport Jamaica*\nJamaica\'s community safety network — now on Telegram.',
-    { parse_mode: 'Markdown', reply_markup: keyboard }
-  )
-}
+export { sendMainMenu } from './menu'
 
 async function handleLeaderboard(ctx: BotContext) {
   const supabase = createServiceSupabaseClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('reporter_profiles')
     .select('fingerprint, total_points, total_reports')
     .order('total_points', { ascending: false })
     .limit(10)
+
+  if (error) {
+    console.error('[tg/leaderboard]', error)
+    await ctx.reply('⚠️ Could not load leaderboard. Please try again later.')
+    await sendMainMenu(ctx)
+    return
+  }
 
   const lines = (data ?? []).map((r, i) =>
     `${i + 1}. Reporter #${r.fingerprint.slice(-4).toUpperCase()} — ${r.total_points} pts (${r.total_reports} reports)`
