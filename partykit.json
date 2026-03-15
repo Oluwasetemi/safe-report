@@ -1,0 +1,9 @@
+{
+  "name": "safe-report",
+  "main": "party/map.ts",
+  "parties": {
+    "map": "party/map.ts",
+    "authority": "party/authority.ts",
+    "incident": "party/incident.ts"
+  }
+}
