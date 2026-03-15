@@ -1,4 +1,4 @@
-import VoyageAI from 'voyageai'
+import { VoyageAIClient as VoyageAI } from 'voyageai'
 
 const voyage = new VoyageAI({ apiKey: process.env.VOYAGE_API_KEY! })
 
