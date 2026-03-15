@@ -1,3 +1,24 @@
+import { LoginForm } from '@/components/authority/login-form'
+
 export default function AuthorityLoginPage() {
-  return <main className="min-h-screen flex items-center justify-center">Authority Login — TODO</main>
+  return (
+    <main style={{ minHeight: '100vh', background: 'var(--surface-raised)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'inline-block', background: 'var(--brand-primary)', padding: '6px 16px', marginBottom: 16 }}>
+            <span style={{ fontFamily: 'var(--font-barlow-condensed)', fontWeight: 700, color: '#0A0A0A', fontSize: 20, letterSpacing: 2 }}>
+              SAFEREPORT
+            </span>
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-barlow-condensed)', fontSize: 28, margin: '0 0 8px', color: 'var(--text-primary)' }}>
+            AUTHORITY PORTAL
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>
+            Restricted access — authorised personnel only
+          </p>
+        </div>
+        <LoginForm />
+      </div>
+    </main>
+  )
 }
