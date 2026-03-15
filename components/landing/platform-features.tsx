@@ -115,7 +115,7 @@ const CHANNELS: Channel[] = [
     tagline: 'App-like · no app store',
     description: 'Add to home screen for offline-queued reports, full-screen mode, and app-speed load times.',
     steps: ['Open in Chrome or Safari', 'Tap "Add to Home Screen"', 'Launch like a native app'],
-    live: false,
+    live: true,
   },
   {
     id: 'telegram',
@@ -125,7 +125,7 @@ const CHANNELS: Channel[] = [
     description: 'Chat-based reporting directly inside Telegram. Share location, photo, and description — guided in three messages.',
     steps: ['Message @SafeReportJM', 'Send REPORT', 'Follow guided prompts'],
     hint: '@SafeReportJM',
-    live: false,
+    live: true,
   },
   {
     id: 'whatsapp',
@@ -437,8 +437,8 @@ export function PlatformFeatures() {
                 </h2>
               </div>
               <div className="hidden sm:block text-right shrink-0">
-                <div className="font-data text-[10px] tracking-[2px] text-brand mb-1">1 LIVE</div>
-                <div className="font-data text-[10px] tracking-[2px] text-fog">6 COMING SOON</div>
+                <div className="font-data text-[10px] tracking-[2px] text-brand mb-1">3 LIVE</div>
+                <div className="font-data text-[10px] tracking-[2px] text-fog">4 COMING SOON</div>
               </div>
             </div>
           </FadeUp>
@@ -518,53 +518,55 @@ export function PlatformFeatures() {
               <FadeUp key={ch.id} delay={i * 80}>
                 <div className="relative bg-ink overflow-hidden group h-full min-h-[240px]">
 
-                  {/* COMING SOON badge — sits in flow at top, not absolute, so it never overlaps */}
-                  <div className="absolute top-4 right-4 z-20 font-data text-[9px] tracking-[2px] text-fog/70 border border-fog/20 px-2 py-[3px] uppercase leading-none">
-                    COMING SOON
-                  </div>
+                  {/* COMING SOON badge */}
+                  {!ch.live && (
+                    <div className="absolute top-4 right-4 z-20 font-data text-[9px] tracking-[2px] text-fog/70 border border-fog/20 px-2 py-[3px] uppercase leading-none">
+                      COMING SOON
+                    </div>
+                  )}
 
-                  {/* Subtle overlay to mute content */}
-                  <div className="absolute inset-0 bg-ink/40 z-10 pointer-events-none" />
+                  {/* Subtle overlay to mute content for coming-soon channels */}
+                  {!ch.live && <div className="absolute inset-0 bg-ink/40 z-10 pointer-events-none" />}
 
                   <div className="relative z-0 p-7 flex flex-col h-full">
                     {/* Status + signal */}
                     <div className="flex items-center gap-3 mb-5">
-                      <StatusBadge live={false} />
-                      <SignalBars live={false} />
+                      <StatusBadge live={ch.live} />
+                      <SignalBars live={ch.live} />
                     </div>
 
                     {/* Icon + name */}
                     <div className="flex items-center gap-3 mb-3">
-                      <span className="text-[24px] opacity-60">{ch.icon}</span>
+                      <span className={`text-[24px] ${ch.live ? '' : 'opacity-60'}`}>{ch.icon}</span>
                       <div>
-                        <h3 className="font-condensed font-bold text-[20px] uppercase text-steel m-0 leading-none tracking-[0.5px]">
+                        <h3 className={`font-condensed font-bold text-[20px] uppercase m-0 leading-none tracking-[0.5px] ${ch.live ? 'text-snow' : 'text-steel'}`}>
                           {ch.name}
                         </h3>
-                        <p className="font-data text-[9px] tracking-[1.5px] text-fog/60 uppercase mt-0.5">
+                        <p className={`font-data text-[9px] tracking-[1.5px] uppercase mt-0.5 ${ch.live ? 'text-fog' : 'text-fog/60'}`}>
                           {ch.tagline}
                         </p>
                       </div>
                     </div>
 
-                    <p className="font-body text-[13px] text-fog leading-relaxed mb-5 flex-1">
+                    <p className={`font-body text-[13px] leading-relaxed mb-5 flex-1 ${ch.live ? 'text-steel' : 'text-fog'}`}>
                       {ch.description}
                     </p>
 
-                    {/* Preview steps — greyed out */}
+                    {/* Steps */}
                     <ol className="flex flex-col gap-1.5 list-none m-0 p-0">
                       {ch.steps.map((step, si) => (
                         <li key={si} className="flex items-start gap-2">
-                          <span className="font-data text-[9px] tracking-[1px] text-fog/40 mt-[1px] shrink-0">
+                          <span className={`font-data text-[9px] tracking-[1px] mt-[1px] shrink-0 ${ch.live ? 'text-brand/70' : 'text-fog/40'}`}>
                             {String(si + 1).padStart(2, '0')} →
                           </span>
-                          <span className="font-body text-[12px] text-fog/50 leading-snug">{step}</span>
+                          <span className={`font-body text-[12px] leading-snug ${ch.live ? 'text-snow' : 'text-fog/50'}`}>{step}</span>
                         </li>
                       ))}
                     </ol>
 
                     {/* Hint */}
                     {ch.hint && (
-                      <div className="mt-4 font-data text-[9px] tracking-[1.5px] text-fog/30 uppercase border-t border-white/[0.04] pt-4">
+                      <div className={`mt-4 font-data text-[9px] tracking-[1.5px] uppercase border-t border-white/[0.04] pt-4 ${ch.live ? 'text-brand/60' : 'text-fog/30'}`}>
                         {ch.hint}
                       </div>
                     )}
@@ -577,7 +579,7 @@ export function PlatformFeatures() {
           {/* Footer note */}
           <FadeUp delay={300}>
             <p className="font-data text-[10px] tracking-[1.5px] text-fog/40 text-center mt-8 uppercase">
-              Telegram · WhatsApp · SMS · USSD · Voice IVR — launching 2025 · notify me at alerts@safereport.gov.jm
+              WhatsApp · SMS · USSD · Voice IVR — launching 2025 · notify me at alerts@safereport.gov.jm
             </p>
           </FadeUp>
         </div>
