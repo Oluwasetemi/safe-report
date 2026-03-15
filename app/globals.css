@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* ─── Tailwind v4 design tokens ─── */
+@theme {
+  --color-brand:      #D4FF00;
+  --color-brand-dark: #AACC00;
+  --color-ink:        #0A0A0A;
+  --color-panel:      #111318;
+  --color-navy:       #0D1829;
+  --color-ink-card:   #1A2235;
+  --color-snow:       #F2F4F7;
+  --color-steel:      #8A9BC0;
+  --color-fog:        #4A5A7A;
+  --color-crit:       #FF2D2D;
+  --color-fire:       #FF7A00;
+  --color-warn:       #FFD600;
+  --color-safe:       #00C853;
+}
+
+/* Fonts reference Next.js injected CSS vars — must use inline */
+@theme inline {
+  --font-condensed: var(--font-barlow-condensed);
+  --font-body:      var(--font-barlow);
+  --font-data:      var(--font-space-mono);
+}
+
+/* Ticker marquee animation */
+@keyframes ticker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 :root {
   /* Hi-Vis Signal brand */
   --brand-primary: #D4FF00;      /* Chartreuse */

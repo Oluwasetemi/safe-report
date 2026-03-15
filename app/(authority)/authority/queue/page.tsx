@@ -1,6 +1,13 @@
+import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { TriageQueueClient } from '@/components/authority/triage-queue-client'
+
+export const metadata: Metadata = {
+  title: 'Triage Queue',
+  description: 'Authority incident triage queue for JCF, JFB, NAS, ODPEM, NWA, and JPS officers.',
+  robots: { index: false, follow: false },
+}
 
 export default async function TriageQueuePage() {
   const supabase = await createServerSupabaseClient()

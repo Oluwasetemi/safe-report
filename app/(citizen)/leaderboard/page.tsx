@@ -1,4 +1,19 @@
+import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+
+export const metadata: Metadata = {
+  title: 'Community Leaderboard',
+  description: 'Top reporters keeping Jamaica safe. See who is making a difference in their parish.',
+  openGraph: {
+    title: 'Community Leaderboard | SafeReport',
+    description: 'Top reporters keeping Jamaica safe — ranked by parish across all 14 parishes.',
+    images: [{ url: '/api/og?title=COMMUNITY+LEADERBOARD&description=Top+reporters+keeping+Jamaica+safe.+Ranked+by+parish.', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    images: ['/api/og?title=COMMUNITY+LEADERBOARD&description=Top+reporters+keeping+Jamaica+safe.+Ranked+by+parish.'],
+  },
+}
 
 export default async function LeaderboardPage() {
   const supabase = await createServerSupabaseClient()

@@ -1,5 +1,12 @@
+import type { Metadata } from 'next'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = {
+  title: 'Analytics Dashboard',
+  description: 'Resolution rates, category breakdowns, and parish-level analytics for authority officers.',
+  robots: { index: false, follow: false },
+}
 
 export default async function AnalyticsPage() {
   const supabase = await createServerSupabaseClient()
