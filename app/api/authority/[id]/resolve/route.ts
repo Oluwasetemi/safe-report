@@ -1,9 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { applyStatusUpdate } from '@/lib/api/authority-update'
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
   const params = await paramsPromise
-  return NextResponse.json({ id: params.id, message: 'TODO' }, { status: 501 })
+  const body = await req.json().catch(() => ({}))
+  return applyStatusUpdate(req, params.id, 'resolved', {
+    resolved_at: new Date().toISOString(),
+    resolution_description: (body as { description?: string }).description,
+  })
 }

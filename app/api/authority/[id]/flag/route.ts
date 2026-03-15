@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { applyStatusUpdate } from '@/lib/api/authority-update'
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params: paramsPromise }: { params: Promise<{ id: string }> }
 ) {
   const params = await paramsPromise
-  return NextResponse.json({ id: params.id, message: 'TODO' }, { status: 501 })
+  return applyStatusUpdate(req, params.id, 'flagged', { flagged: true })
 }
