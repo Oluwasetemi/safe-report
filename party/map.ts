@@ -17,7 +17,8 @@ async function fetchActiveReports(supabaseUrl: string, serviceRoleKey: string): 
     `?select=${fields}` +
     `&expires_at=gt.${encodeURIComponent(now)}` +
     `&status=not.in.(resolved,flagged)` +
-    `&order=created_at.desc`
+    `&order=created_at.desc` +
+    `&limit=500`
 
   const res = await fetch(url, {
     headers: {
@@ -44,8 +45,8 @@ export default class MapParty implements Party.Server {
     this.incidents = stored ?? []
 
     // Refresh from Supabase (source of truth) and schedule periodic sync
-    await this.syncFromSupabase()
     await this.room.storage.setAlarm(Date.now() + SYNC_INTERVAL_MS)
+    await this.syncFromSupabase()
   }
 
   private async syncFromSupabase() {
@@ -60,7 +61,9 @@ export default class MapParty implements Party.Server {
     try {
       const fresh = await fetchActiveReports(supabaseUrl, serviceRoleKey)
       this.incidents = fresh
-      void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+      this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+        console.error('[MapParty] storage.put failed:', err)
+      )
       console.log(`[MapParty] synced ${fresh.length} active reports from Supabase`)
     } catch (err) {
       console.error('[MapParty] Supabase sync failed, keeping current snapshot:', err)
@@ -86,7 +89,9 @@ export default class MapParty implements Party.Server {
 
       if (event.type === 'INCIDENT_CREATED') {
         this.incidents = [...this.incidents, event.incident]
-        void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+        this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+          console.error('[MapParty] storage.put failed:', err)
+        )
         this.room.broadcast(JSON.stringify(event), [sender.id])
       }
 
@@ -94,13 +99,17 @@ export default class MapParty implements Party.Server {
         this.incidents = this.incidents.map((i) =>
           i.id === event.incident.id ? event.incident : i
         )
-        void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+        this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+          console.error('[MapParty] storage.put failed:', err)
+        )
         this.room.broadcast(JSON.stringify(event), [sender.id])
       }
 
       if (event.type === 'INCIDENT_RESOLVED') {
         this.incidents = this.incidents.filter((i) => i.id !== event.incidentId)
-        void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+        this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+          console.error('[MapParty] storage.put failed:', err)
+        )
         this.room.broadcast(JSON.stringify(event), [sender.id])
       }
 
@@ -110,7 +119,9 @@ export default class MapParty implements Party.Server {
             ? { ...i, confidence_score: event.confidenceScore, corroboration_count: event.count }
             : i
         )
-        void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+        this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+          console.error('[MapParty] storage.put failed:', err)
+        )
         this.room.broadcast(JSON.stringify(event))
       }
     } catch {
@@ -127,7 +138,9 @@ export default class MapParty implements Party.Server {
       // Update snapshot for new connections
       if (event.type === 'INCIDENT_CREATED') {
         this.incidents = [...this.incidents, event.incident]
-        void this.room.storage.put(SNAPSHOT_KEY, this.incidents)
+        this.room.storage.put(SNAPSHOT_KEY, this.incidents).catch((err: unknown) =>
+          console.error('[MapParty] storage.put failed:', err)
+        )
       }
 
       return new Response('OK', { status: 200 })
