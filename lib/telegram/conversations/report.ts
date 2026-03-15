@@ -9,7 +9,9 @@ import { hashFingerprint } from '@/lib/fingerprint'
 import { getDepartmentsForCategory } from '@/lib/alerts/routing'
 import { sendSMS } from '@/lib/alerts/sms'
 import { sendEmail } from '@/lib/alerts/email'
+import { sendWhatsApp } from '@/lib/alerts/whatsapp'
 import { authorityPush } from '@/lib/push/authority-push'
+import { citizenPush } from '@/lib/push/citizen-push'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import type { AlertPayload, Category } from '@/lib/types'
 import type { BotContext } from '../bot'
@@ -48,6 +50,10 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 const POINTS: Record<string, number> = {
   CRITICAL: 50, HIGH: 30, MEDIUM: 20, LOW: 10,
+}
+
+const REPORT_TTL_HOURS: Record<string, number> = {
+  CRITICAL: 48, HIGH: 24, MEDIUM: 12, LOW: 6,
 }
 
 function categoryKeyboard(): InlineKeyboard {
@@ -159,46 +165,7 @@ export async function reportConversation(
     process.env.FINGERPRINT_SALT ?? 'default-salt'
   )
 
-  // 1. Geocode GPS if available
-  if (lat !== 0) {
-    try {
-      const geo = await reverseGeocode(lat, lng)
-      address = geo.address
-      parish = geo.parish
-    } catch {
-      // silently fall back to stored values
-    }
-  }
-
-  // 2. Classify — classifyReport returns { aiSummary, confidence, severity,
-  //    category, subcategory, embedding, isDuplicate, parentId }
-  //    (no is_crime field — derive from category)
-  let classification: Awaited<ReturnType<typeof classifyReport>>
-  try {
-    classification = await classifyReport({ description, parish, lat, lng })
-  } catch {
-    await ctx.reply('⚠️ Failed to process your report. Please try again.')
-    await sendMainMenuMessage(ctx)
-    return
-  }
-
-  // If duplicate, corroborate and inform user
-  if (classification.isDuplicate && classification.parentId) {
-    const supabaseForDup = createServiceSupabaseClient()
-    await supabaseForDup.rpc('corroborate_report', {
-      p_report_id: classification.parentId,
-      p_trust_multiplier: 1.0,
-    })
-    await ctx.reply('ℹ️ This incident has already been reported. Your confirmation helps authorities prioritise it.')
-    await sendMainMenuMessage(ctx)
-    return
-  }
-
-  const sev = (classification.severity ?? 'LOW').toUpperCase()
-  // is_crime is derived from category — same logic as web app
-  const isCrime = classification.category === 'crime' || classification.category === 'violence'
-
-  // 3. Rate limit
+  // 1. Rate limit — check before expensive AI calls
   const supabase = createServiceSupabaseClient()
   const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
   const { count } = await supabase
@@ -213,9 +180,47 @@ export async function reportConversation(
     return
   }
 
-  // 4. Generate ticket + JCF police ref for crime/violence
+  // 2. Geocode GPS if available
+  if (lat !== 0) {
+    try {
+      const geo = await reverseGeocode(lat, lng)
+      address = geo.address
+      parish = geo.parish
+    } catch {
+      // silently fall back to stored values
+    }
+  }
+
+  // 3. Classify — classifyReport returns { aiSummary, confidence, severity,
+  //    category, subcategory, embedding, isDuplicate, parentId }
+  //    (no is_crime field — derive from category)
+  let classification: Awaited<ReturnType<typeof classifyReport>>
+  try {
+    classification = await classifyReport({ description, parish, lat, lng })
+  } catch {
+    await ctx.reply('⚠️ Failed to process your report. Please try again.')
+    await sendMainMenuMessage(ctx)
+    return
+  }
+
+  // If duplicate, corroborate and inform user
+  if (classification.isDuplicate && classification.parentId) {
+    await supabase.rpc('corroborate_report', {
+      p_report_id: classification.parentId,
+      p_trust_multiplier: 1.0,
+    })
+    await ctx.reply('ℹ️ This incident has already been reported. Your confirmation helps authorities prioritise it.')
+    await sendMainMenuMessage(ctx)
+    return
+  }
+
+  const sev = (classification.severity ?? 'LOW').toUpperCase()
+  // is_crime is derived from category — same logic as web app
+  const isCrime = classification.category === 'crime' || classification.category === 'violence'
+
+  // 4. Generate ticket + JCF police ref for crime only
   const ticketNumber = `SR-${Date.now().toString(36).toUpperCase()}`
-  const policeRefNumber = isCrime
+  const policeRefNumber = classification.category === 'crime'
     ? `JCF-${randomBytes(3).toString('hex').toUpperCase()}`
     : null
 
@@ -235,6 +240,7 @@ export async function reportConversation(
       device_fingerprint: fingerprint,
       ticket_number:      ticketNumber,
       police_ref_number:  policeRefNumber,
+      expires_at:         new Date(Date.now() + (REPORT_TTL_HOURS[sev] ?? 12) * 60 * 60 * 1000).toISOString(),
     })
     .select()
     .single()
@@ -280,10 +286,23 @@ export async function reportConversation(
     }
     return Promise.allSettled([
       sendSMS(departments, alertPayload),
+      sendWhatsApp(departments, alertPayload),
       sendEmail(departments, alertPayload),
       ...departments.map(d => authorityPush(d.id, inserted)),
-    ])
+    ]).then(() => {
+      // Update departments_alerted and alerts_sent_at
+      return supabase
+        .from('reports')
+        .update({
+          departments_alerted: departments.map(d => d.name),
+          alerts_sent_at: new Date().toISOString(),
+        })
+        .eq('id', inserted.id)
+    })
   }).catch((e: unknown) => console.error('[tg/alert]', e))
+
+  // Non-blocking citizen proximity notifications
+  Promise.resolve(citizenPush(inserted)).catch(e => console.error('[tg/citizenPush]', e))
 
   // 8. Reply with ticket
   await ctx.reply(
