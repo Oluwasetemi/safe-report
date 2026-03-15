@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
   // Load logo from public dir (transparent PNG shield icon)
   let logoSrc: string | null = null
   try {
-    const buf = readFileSync(join(process.cwd(), 'public/2-Photoroom.png'))
+    const buf = readFileSync(join(process.cwd(), 'public/logo-shield.png'))
     logoSrc = `data:image/png;base64,${buf.toString('base64')}`
   } catch { /* no logo */ }
 

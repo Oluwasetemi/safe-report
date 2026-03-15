@@ -128,17 +128,17 @@ export default function LandingPage() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 no-underline">
           <Image
-            src="/2-Photoroom.png"
+            src="/logo-shield.png"
             alt="SafeReport"
-            width={36}
-            height={36}
+            width={22}
+            height={24}
             className="object-contain"
           />
           <span className="font-condensed font-bold text-[22px] tracking-[3px] text-snow uppercase">
             SAFE<span className="text-brand">REPORT</span>
           </span>
           <span className="font-data text-[9px] tracking-[2px] text-fog border-l border-white/10 pl-3 leading-[1.4] hidden sm:block">
-            JAMAICA<br />EST. 2025
+            JAMAICA<br />EST. 2026
           </span>
         </Link>
 
@@ -418,10 +418,10 @@ export default function LandingPage() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 no-underline">
             <Image
-              src="/2-Photoroom.png"
+              src="/logo-shield.png"
               alt="SafeReport"
-              width={28}
-              height={28}
+              width={16}
+              height={18}
               className="object-contain"
             />
             <span className="font-condensed font-bold text-[18px] tracking-[3px] text-snow uppercase">
