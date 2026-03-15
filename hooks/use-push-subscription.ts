@@ -64,7 +64,7 @@ export function usePushSubscription(options: Options = {}) {
         keys: { p256dh: string; auth: string }
       }
 
-      await fetch('/api/push/subscribe', {
+      const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,6 +77,10 @@ export function usePushSubscription(options: Options = {}) {
           org_id: org_id ?? null,
         }),
       })
+      if (!res.ok) {
+        setStatus('error')
+        return
+      }
 
       setStatus('subscribed')
     } catch (err) {

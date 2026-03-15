@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import type { PushSubscriptionRow } from '../types'
 
 vi.mock('../push/vapid', () => ({
@@ -31,10 +31,6 @@ const sub: PushSubscriptionRow = {
 }
 
 describe('sendPushNotification', () => {
-  beforeEach(() => {
-    vi.resetModules()
-  })
-
   it('calls webpush.sendNotification with correct arguments', async () => {
     const { webpush } = await import('../push/vapid')
     vi.mocked(webpush.sendNotification).mockResolvedValue({} as never)
