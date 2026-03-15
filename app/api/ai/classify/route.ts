@@ -4,7 +4,11 @@ import { classifyReport } from '@/lib/ai/classify'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const result = await classifyReport(body)
+    const { description, parish, lat, lng } = body
+    if (!description || typeof lat !== 'number' || typeof lng !== 'number') {
+      return NextResponse.json({ error: 'Missing required fields: description, lat, lng' }, { status: 400 })
+    }
+    const result = await classifyReport({ description, parish: parish ?? '', lat, lng })
     return NextResponse.json(result)
   } catch (err) {
     console.error('Classification error:', err)

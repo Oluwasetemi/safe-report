@@ -2,7 +2,7 @@ import type { AlertPayload } from '../../types'
 
 export function formatSMSMessage(payload: AlertPayload): string {
   return `🚨 SAFEREPORT ALERT [${payload.severity}]
-Category: ${payload.category.replace('_', ' ').toUpperCase()}
+Category: ${payload.category.replace(/_/g, ' ').toUpperCase()}
 Location: ${payload.address}
 Parish: ${payload.parish}
 Summary: ${payload.aiSummary}

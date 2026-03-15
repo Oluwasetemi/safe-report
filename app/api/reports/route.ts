@@ -53,16 +53,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Reverse geocode + AI classification in parallel
-    const [{ address, parish }, classification] = await Promise.all([
-      reverseGeocode(lat, lng),
-      classifyReport({ description, parish: '', lat, lng }),
-    ])
-
-    // Re-classify with parish if we got one (parish improves accuracy)
-    const finalClassification = parish
-      ? await classifyReport({ description, parish, lat, lng })
-      : classification
+    // Geocode first — parish is needed for accurate AI classification
+    const { address, parish } = await reverseGeocode(lat, lng)
+    const finalClassification = await classifyReport({ description, parish, lat, lng })
 
     // If duplicate, corroborate parent and return
     if (finalClassification.isDuplicate && finalClassification.parentId) {

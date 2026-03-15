@@ -16,7 +16,7 @@ export function AlertEmailTemplate({ payload }: { payload: import('../../types')
       <div style={{ background: severityColor[payload.severity], color: '#0A0A0A', padding: '4px 12px', display: 'inline-block', borderRadius: 4, marginBottom: 16, fontWeight: 700 }}>
         {payload.severity}
       </div>
-      <p><strong>Category:</strong> {payload.category.replace('_', ' ').toUpperCase()}</p>
+      <p><strong>Category:</strong> {payload.category.replace(/_/g, ' ').toUpperCase()}</p>
       <p><strong>Parish:</strong> {payload.parish}</p>
       <p><strong>Address:</strong> {payload.address}</p>
       <p><strong>AI Summary:</strong> {payload.aiSummary}</p>
