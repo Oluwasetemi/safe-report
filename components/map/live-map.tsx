@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useRealtimeMap } from '@/hooks/use-realtime-map'
 import { IncidentPin } from './incident-pin'
+import { CrimeZone } from './crime-zone'
 
 // Jamaica center
 const JAMAICA_CENTER: [number, number] = [18.1096, -77.2975]
@@ -29,10 +30,6 @@ interface LiveMapProps {
 export function LiveMap({ userLat, userLng, authorityMode }: LiveMapProps) {
   const { incidents, corroborate } = useRealtimeMap()
 
-  const visibleIncidents = authorityMode
-    ? incidents
-    : incidents.filter((i) => !i.is_crime)
-
   return (
     <MapContainer
       center={JAMAICA_CENTER}
@@ -45,13 +42,28 @@ export function LiveMap({ userLat, userLng, authorityMode }: LiveMapProps) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       {(userLat && userLng) && <MapRecenter lat={userLat} lng={userLng} />}
-      {visibleIncidents.map((report) => (
-        <IncidentPin
-          key={report.id}
-          report={report}
-          onCorroborate={authorityMode ? undefined : corroborate}
-        />
-      ))}
+      {/* Non-crime incidents: always show as pins */}
+      {incidents
+        .filter((r) => !r.is_crime)
+        .map((report) => (
+          <IncidentPin
+            key={report.id}
+            report={report}
+            onCorroborate={authorityMode ? undefined : corroborate}
+          />
+        ))}
+      {/* Crime: fuzzy circle on public map */}
+      {!authorityMode && incidents
+        .filter((r) => r.is_crime)
+        .map((report) => (
+          <CrimeZone key={report.id} lat={report.lat} lng={report.lng} />
+        ))}
+      {/* Crime: exact pin for authority map */}
+      {authorityMode && incidents
+        .filter((r) => r.is_crime)
+        .map((report) => (
+          <IncidentPin key={report.id} report={report} />
+        ))}
     </MapContainer>
   )
 }
