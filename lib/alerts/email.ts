@@ -3,9 +3,8 @@ import { createElement } from 'react'
 import type { AuthorityOrg, AlertPayload } from '../types'
 import { AlertEmailTemplate } from './templates/email'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 export async function sendEmail(orgs: AuthorityOrg[], payload: AlertPayload): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY)
   const targets = orgs.filter((o) => o.alert_email)
   await Promise.allSettled(
     targets.map((org) =>
