@@ -1,6 +1,7 @@
 {
   "name": "safe-report",
   "main": "party/map.ts",
+  "compatibilityDate": "2026-03-15",
   "parties": {
     "map": "party/map.ts",
     "authority": "party/authority.ts",

@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, useMap } from 'react-leaflet'
+import type { Map } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useRealtimeMap } from '@/hooks/use-realtime-map'
 import { IncidentPin } from './incident-pin'
@@ -29,9 +30,20 @@ interface LiveMapProps {
 
 export function LiveMap({ userLat, userLng, authorityMode }: LiveMapProps) {
   const { incidents, corroborate } = useRealtimeMap()
+  const mapRef = useRef<Map | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+      }
+    }
+  }, [])
 
   return (
     <MapContainer
+      ref={mapRef}
       center={JAMAICA_CENTER}
       zoom={DEFAULT_ZOOM}
       style={{ width: '100%', height: '100%' }}
