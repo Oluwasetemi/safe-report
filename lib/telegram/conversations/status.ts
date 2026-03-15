@@ -1,10 +1,10 @@
 // lib/telegram/conversations/status.ts
-import type { Conversation } from '@grammy/conversations'
+import type { Conversation } from '@grammyjs/conversations'
 import { InlineKeyboard } from 'grammy'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import type { BotContext } from '../bot'
 
-type StatusConversation = Conversation<BotContext>
+type StatusConversation = Conversation<BotContext, BotContext>
 
 export async function statusConversation(
   conversation: StatusConversation,

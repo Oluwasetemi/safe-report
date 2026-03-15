@@ -1,6 +1,6 @@
 // lib/telegram/conversations/report.ts
 import { randomBytes } from 'crypto'
-import type { Conversation } from '@grammy/conversations'
+import type { Conversation } from '@grammyjs/conversations'
 import type { InlineKeyboard } from 'grammy'
 import { InlineKeyboard as KB } from 'grammy'
 import { classifyReport } from '@/lib/ai/classify'
@@ -67,7 +67,7 @@ function categoryKeyboard(): InlineKeyboard {
     .text('❓ Other',            'category:other')
 }
 
-type ReportConversation = Conversation<BotContext>
+type ReportConversation = Conversation<BotContext, BotContext>
 
 export async function reportConversation(
   conversation: ReportConversation,
