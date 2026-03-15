@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { CategoryPicker } from '@/components/report/category-picker'
 import { LocationCapture } from '@/components/report/location-capture'
 import { PhotoUpload } from '@/components/report/photo-upload'
+import { DiscreetModeToggle } from '@/components/report/discreet-mode-toggle'
+import { DiscreetOverlay } from '@/components/report/discreet-overlay'
 import type { Category } from '@/lib/types'
 
 type Step = 'category' | 'location' | 'description' | 'review'
@@ -20,6 +22,7 @@ export default function ReportPage() {
   const [photoUrl, setPhotoUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [discreetMode, setDiscreetMode] = useState(false)
 
   const rawFingerprint = typeof window !== 'undefined' ? [
     navigator.userAgent,
@@ -102,6 +105,9 @@ export default function ReportPage() {
           <div style={{ marginTop: 16 }}>
             <PhotoUpload onPhoto={setPhotoUrl} />
           </div>
+          {(category === 'crime' || category === 'violence') && (
+            <DiscreetModeToggle enabled={discreetMode} onToggle={() => setDiscreetMode(!discreetMode)} />
+          )}
           <button disabled={description.length < 10} onClick={() => setStep('review')}
             style={{ marginTop: 16, width: '100%', padding: '14px', background: description.length >= 10 ? 'var(--brand-primary)' : 'var(--border)', color: description.length >= 10 ? '#0A0A0A' : 'var(--text-muted)', border: 'none', borderRadius: 8, fontFamily: 'var(--font-barlow-condensed)', fontWeight: 700, fontSize: 16, cursor: description.length >= 10 ? 'pointer' : 'not-allowed' }}>
             REVIEW →
@@ -125,6 +131,7 @@ export default function ReportPage() {
           </button>
         </div>
       )}
+      {discreetMode && <DiscreetOverlay onExit={() => setDiscreetMode(false)} />}
     </main>
   )
 }
