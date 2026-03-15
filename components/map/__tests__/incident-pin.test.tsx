@@ -1,0 +1,49 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import type { Report } from '../../../lib/types'
+
+// Mock react-leaflet
+vi.mock('react-leaflet', () => ({
+  Marker: ({ children }: { children: React.ReactNode }) => <div data-testid="marker">{children}</div>,
+  Popup:  ({ children }: { children: React.ReactNode }) => <div data-testid="popup">{children}</div>,
+}))
+vi.mock('leaflet', () => ({
+  default: { divIcon: vi.fn(() => ({})) },
+  divIcon: vi.fn(() => ({})),
+}))
+
+const mockReport: Report = {
+  id: 'uuid-1',
+  device_fingerprint: 'fp',
+  lat: 17.99,
+  lng: -76.79,
+  description: 'House on fire',
+  category: 'fire_explosion',
+  severity: 'HIGH',
+  ai_summary: 'A residential fire was reported.',
+  status: 'active',
+  corroboration_count: 3,
+  confidence_score: 0.9,
+  is_duplicate: false,
+  is_crime: false,
+  escalated: false,
+  flagged: false,
+  expires_at: new Date(Date.now() + 1000 * 60 * 60).toISOString(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+}
+
+describe('IncidentPin', () => {
+  it('renders a Marker with popup', async () => {
+    const { IncidentPin } = await import('../incident-pin')
+    render(<IncidentPin report={mockReport} />)
+    expect(screen.getByTestId('marker')).toBeDefined()
+    expect(screen.getByTestId('popup')).toBeDefined()
+  })
+
+  it('displays AI summary in popup', async () => {
+    const { IncidentPin } = await import('../incident-pin')
+    render(<IncidentPin report={mockReport} />)
+    expect(screen.getByText('A residential fire was reported.')).toBeDefined()
+  })
+})
