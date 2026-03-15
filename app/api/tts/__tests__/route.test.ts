@@ -13,6 +13,14 @@ function makeRequest(body: unknown) {
   })
 }
 
+function makeRawRequest(body: string) {
+  return new NextRequest('http://localhost/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  })
+}
+
 describe('POST /api/tts', () => {
   beforeEach(() => {
     vi.stubEnv('EASY_PEASY_API_KEY', 'test-key-123')
@@ -20,7 +28,7 @@ describe('POST /api/tts', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs()
-    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('returns 500 when API key is not set', async () => {
@@ -115,12 +123,7 @@ describe('POST /api/tts', () => {
   })
 
   it('returns 400 on malformed JSON body', async () => {
-    const req = new NextRequest('http://localhost/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: 'not-json',
-    })
-    const res = await POST(req)
+    const res = await POST(makeRawRequest('not-json'))
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error).toBe('Invalid request body')
