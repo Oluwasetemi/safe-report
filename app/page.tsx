@@ -11,6 +11,21 @@ const LiveMap = dynamic(
   { ssr: false, loading: () => <div className="w-full h-full bg-[#0D1829]" /> }
 )
 
+// Dynamically loaded — splits capabilities + channels into a separate chunk
+const PlatformFeatures = dynamic(
+  () => import('@/components/landing/platform-features').then((m) => m.PlatformFeatures),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="bg-ink border-t border-white/[0.04] py-24 flex justify-center items-center min-h-[320px]">
+        <span className="font-data text-[11px] tracking-[3px] text-fog animate-pulse uppercase">
+          Loading capabilities...
+        </span>
+      </div>
+    ),
+  }
+)
+
 const CATEGORIES = [
   { icon: '🔥', label: 'Fire / Explosion',   color: '#FF2D2D' },
   { icon: '🌊', label: 'Flash Flood',         color: '#1A8FFF' },
@@ -255,6 +270,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ─── PLATFORM FEATURES (dynamically loaded) ─── */}
+      <PlatformFeatures />
 
       {/* ─── HOW IT WORKS ─── */}
       <section className="bg-navy border-t border-white/[0.04] py-24 px-8 md:px-12">
