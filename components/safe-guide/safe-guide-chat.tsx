@@ -40,7 +40,9 @@ export function SafeGuideChat({ onClose }: SafeGuideChatProps) {
       .join('')
   }
 
-  // Text-to-speech for assistant messages — Easy-Peasy.AI Jamaican voice (Nicole)
+  // Text-to-speech for assistant messages — Azure en-JM-EthanNeural + Claude pre-processing.
+  // X-Tts-Text header carries the Jamaican English rewrite so both the audio path and the
+  // speechSynthesis fallback speak the same pre-processed version.
   const spokenIdRef = useRef<string | null>(null)
   useEffect(() => {
     if (isLoading) return
@@ -55,12 +57,26 @@ export function SafeGuideChat({ onClose }: SafeGuideChatProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
     })
-      .then((r) => r.json())
-      .then(({ url }: { url?: string }) => {
-        if (url) new Audio(url).play()
+      .then(async r => {
+        const ttsText = r.headers.get('X-Tts-Text')
+          ? atob(r.headers.get('X-Tts-Text')!)
+          : text
+        if (!r.ok) throw new Error(ttsText)
+        const blob  = await r.blob()
+        const url   = URL.createObjectURL(blob)
+        const audio = new Audio(url)
+        audio.onended = () => URL.revokeObjectURL(url)
+        audio.onerror = () => URL.revokeObjectURL(url)
+        audio.play()
       })
-      .catch(() => {
-        // Silent fallback — text remains readable on screen
+      .catch((err: unknown) => {
+        if (!('speechSynthesis' in window)) return
+        const fallbackText = err instanceof Error ? err.message : text
+        const utterance = new SpeechSynthesisUtterance(fallbackText)
+        utterance.lang = 'en-JM'
+        utterance.rate = 0.9
+        window.speechSynthesis.cancel()
+        window.speechSynthesis.speak(utterance)
       })
   }, [messages, isLoading])
 
