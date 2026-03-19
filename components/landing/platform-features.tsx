@@ -358,7 +358,7 @@ export function PlatformFeatures() {
       {/* ═══════════════════════════════════════════════════
           SECTION 2 — HOW IT WORKS (4-phase flow)
       ═══════════════════════════════════════════════════ */}
-      <section className="bg-navy border-t border-white/[0.04] py-24 px-8 md:px-12 overflow-hidden">
+      <section data-tour="tour-platform-how-it-works" className="bg-navy border-t border-white/[0.04] py-24 px-8 md:px-12 overflow-hidden">
         <div className="max-w-[1100px] mx-auto">
 
           <FadeUp>
@@ -450,7 +450,7 @@ export function PlatformFeatures() {
       {/* ═══════════════════════════════════════════════════
           SECTION 3 — TRANSMISSION CHANNELS
       ═══════════════════════════════════════════════════ */}
-      <section className="bg-panel border-t border-white/[0.04] py-24 px-8 md:px-12">
+      <section data-tour="tour-transmission-channels" className="bg-panel border-t border-white/[0.04] py-24 px-8 md:px-12">
         <div className="max-w-[1100px] mx-auto">
 
           {/* Header */}

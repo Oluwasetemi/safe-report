@@ -26,10 +26,14 @@ export function EmergencyCard() {
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
         {EMERGENCY_CONTACTS.map((c) => (
-          <a key={c.name} href={`tel:${c.number}`}
-            style={{ display: 'flex', flexDirection: 'column', padding: '10px 12px', background: COLORS[c.type], borderRadius: 8, textDecoration: 'none' }}>
+          <a
+            key={c.name}
+            href={`tel:${c.number}`}
+            aria-label={`Call ${c.name} at ${c.number}`}
+            style={{ display: 'flex', flexDirection: 'column', padding: '10px 12px', background: COLORS[c.type], borderRadius: 8, textDecoration: 'none' }}
+          >
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontFamily: 'var(--font-barlow)' }}>{c.name}</span>
-            <span style={{ fontSize: 22, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-space-mono)' }}>{c.number}</span>
+            <span style={{ fontSize: 22, fontWeight: 700, color: '#fff', fontFamily: 'var(--font-space-mono)', fontVariantNumeric: 'tabular-nums' }}>{c.number}</span>
           </a>
         ))}
       </div>
