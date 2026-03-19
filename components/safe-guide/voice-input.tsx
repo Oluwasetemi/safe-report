@@ -134,21 +134,27 @@ export function VoiceInput({ onTranscript }: VoiceInputProps) {
       type="button"
       onClick={toggle}
       disabled={isTranscribing}
-      title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Voice input'}
-      style={{
-        background:   isRecording ? 'var(--severity-critical)' : isTranscribing ? 'var(--border)' : 'var(--surface-card)',
-        border:       isRecording ? '2px solid var(--severity-critical)' : '2px solid transparent',
-        borderRadius: '50%',
-        width:         44,
-        height:        44,
-        cursor:        isTranscribing ? 'not-allowed' : 'pointer',
-        fontSize:      isTranscribing ? 12 : 20,
-        flexShrink:    0,
-        transition:   'background 0.15s',
-        color:        isTranscribing ? 'var(--text-muted)' : undefined,
-      }}
+      aria-label={
+        isRecording    ? 'Stop voice recording' :
+        isTranscribing ? 'Transcribing your voice, please wait' :
+                         'Record voice input (click to start)'
+      }
+      title={
+        isRecording    ? 'Stop recording' :
+        isTranscribing ? 'Transcribing…'  :
+                         'Record voice input (click to start)'
+      }
+      className={[
+        'relative flex items-center justify-center rounded-full shrink-0 transition-all duration-150',
+        'w-11 h-11 text-xl',
+        isTranscribing
+          ? 'cursor-not-allowed text-[var(--text-muted)] bg-[var(--border)] text-xs'
+          : isRecording
+            ? 'cursor-pointer bg-[var(--severity-critical)] border-2 border-[var(--severity-critical)] shadow-[0_0_0_3px_rgba(255,45,45,0.25)] hover:shadow-[0_0_0_5px_rgba(255,45,45,0.35)]'
+            : 'cursor-pointer bg-[var(--surface-card)] border-2 border-transparent hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary)]/10 hover:shadow-[0_0_0_3px_rgba(212,255,0,0.15)]',
+      ].join(' ')}
     >
-      {isTranscribing ? '...' : isRecording ? '\u23F9' : '\uD83C\uDF99'}
+      <span aria-hidden="true">{isTranscribing ? '…' : isRecording ? '\u23F9' : '\uD83C\uDF99'}</span>
     </button>
   )
 }
