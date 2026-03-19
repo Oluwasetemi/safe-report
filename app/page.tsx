@@ -3,15 +3,20 @@
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 
 import { TourProvider } from '@/components/tour/tour-provider'
 import { TourButton } from '@/components/tour/tour-button'
 
+const SafeGuideChat = dynamic(
+  () => import('@/components/safe-guide/safe-guide-chat').then((m) => m.SafeGuideChat),
+  { ssr: false }
+)
+
 // Leaflet must be client-only
 const LiveMap = dynamic(
   () => import('@/components/map/live-map').then((m) => m.LiveMap),
-  { ssr: false, loading: () => <div className="w-full h-full bg-[#0D1829]" /> }
+  { ssr: false, loading: () => <div className="w-full h-full min-h-[560px] bg-[#0D1829]" /> }
 )
 
 // Dynamically loaded — splits capabilities + channels into a separate chunk
@@ -21,8 +26,8 @@ const PlatformFeatures = dynamic(
     ssr: false,
     loading: () => (
       <div className="bg-ink border-t border-white/[0.04] py-24 flex justify-center items-center min-h-[320px]">
-        <span className="font-data text-[11px] tracking-[3px] text-fog animate-pulse uppercase">
-          Loading capabilities...
+        <span className="font-data text-[11px] tracking-[3px] text-fog motion-safe:animate-pulse uppercase">
+          Loading capabilities…
         </span>
       </div>
     ),
@@ -48,14 +53,16 @@ const CATEGORIES = [
 const STEPS = [
   {
     num: '01',
-    title: 'WITNESS & REPORT',
-    body: 'Tap once. Describe what you see, drop your location, attach a photo. Takes under 60 seconds.',
+    title: 'SEE IT, REPORT IT',
+    patois: 'Yuh si it, yuh report it',
+    body: 'Tap wance. Describe weh yuh si, drop yuh location, add a photo. Ready inna undah 60 seconds.',
     icon: '📡',
     accent: '#D4FF00',
   },
   {
     num: '02',
     title: 'AI CLASSIFIES & ROUTES',
+    patois: 'Di AI sort it out',
     body: 'Our model identifies severity, category, and the right agencies — eliminating false alarms before they waste resources.',
     icon: '🧠',
     accent: '#8A9BC0',
@@ -63,6 +70,7 @@ const STEPS = [
   {
     num: '03',
     title: 'AUTHORITIES RESPOND',
+    patois: 'Help deh pon di way',
     body: 'JCF, JFB, NAS, ODPEM — all 14 parishes. Officers receive triage alerts in real time and acknowledge on mobile.',
     icon: '🚨',
     accent: '#FF2D2D',
@@ -108,8 +116,148 @@ function LiveBadge() {
   )
 }
 
+const MOCK_CHAT = [
+  { role: 'user',      text: 'Big pothole pon Spanish Town Road near di market' },
+  { role: 'assistant', text: '**Aright.** Which parish — Kingston or St. Catherine? Any immediate danger to drivers?' },
+  { role: 'user',      text: 'Kingston side, near di traffic light. Cars a swerve to dodge it' },
+  { role: 'assistant', text: 'Filing now — **road hazard, Kingston, HIGH.** Confirm submit?' },
+  { role: 'user',      text: 'Yeah man, send it through' },
+  { role: 'assistant', text: '✅ Report submit. Yuh ticket is **SR-M9KXPQ2R**. NWA Kingston get di alert.' },
+]
+
+// ── Landing page voice button ──────────────────────────────────────────────
+// Records speech, sends to SafeGuide as the opening message.
+interface LandingVoiceButtonProps {
+  onTranscript: (text: string) => void
+}
+
+function LandingVoiceButton({ onTranscript }: LandingVoiceButtonProps) {
+  const [state, setState] = useState<'idle' | 'recording' | 'transcribing'>('idle')
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const chunksRef = useRef<Blob[]>([])
+
+  async function sendToWhisper(blob: Blob) {
+    setState('transcribing')
+    try {
+      const form = new FormData()
+      form.append('audio', blob, 'recording.webm')
+      const res = await fetch('/api/ai/transcribe', { method: 'POST', body: form })
+      const data = await res.json()
+      if (data.transcript) onTranscript(data.transcript)
+    } catch { /* silently fall through */ }
+    finally { setState('idle') }
+  }
+
+  async function start() {
+    // Try Web Speech API first
+    const w = window as Window & { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }
+    const API = w.SpeechRecognition ?? w.webkitSpeechRecognition
+    if (API) {
+      const r = new API()
+      r.lang = 'en-JM'
+      r.continuous = false
+      r.interimResults = false
+      r.onresult = (e: SpeechRecognitionEvent) => { onTranscript(e.results[0][0].transcript); setState('idle') }
+      r.onerror = () => { setState('idle'); startMediaRecorder() }
+      r.onend = () => setState('idle')
+      r.start()
+      setState('recording')
+      return
+    }
+    startMediaRecorder()
+  }
+
+  async function startMediaRecorder() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg'
+      const recorder = new MediaRecorder(stream, { mimeType })
+      chunksRef.current = []
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        sendToWhisper(new Blob(chunksRef.current, { type: mimeType }))
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setState('recording')
+    } catch { setState('idle') }
+  }
+
+  function stop() { mediaRecorderRef.current?.stop(); mediaRecorderRef.current = null }
+
+  const isRecording = state === 'recording'
+  const isTranscribing = state === 'transcribing'
+
+  return (
+    <button
+      type="button"
+      onClick={isRecording ? stop : isTranscribing ? undefined : start}
+      disabled={isTranscribing}
+      aria-label={
+        isRecording    ? 'Stop voice recording' :
+        isTranscribing ? 'Transcribing your voice, please wait' :
+                         'Click to speak — report in Patois or English'
+      }
+      title={
+        isRecording    ? 'Stop recording' :
+        isTranscribing ? 'Transcribing your voice…' :
+                         'Click to speak — report in Patois or English'
+      }
+      className="group relative flex flex-col items-center gap-3"
+    >
+      {/* Pulse rings when recording */}
+      {isRecording && (
+        <>
+          <span className="absolute inset-0 rounded-full motion-safe:animate-ping bg-brand opacity-20" style={{ margin: -16 }} />
+          <span className="absolute inset-0 rounded-full motion-safe:animate-ping bg-brand opacity-10" style={{ margin: -28, animationDelay: '0.3s' }} />
+        </>
+      )}
+      <span
+        className={[
+          'relative flex items-center justify-center rounded-full transition-all duration-200',
+          !isRecording && !isTranscribing && 'group-hover:scale-110 group-hover:shadow-[0_8px_40px_rgba(212,255,0,0.65)]',
+          isRecording && 'group-hover:scale-105',
+        ].filter(Boolean).join(' ')}
+        style={{
+          width: 72, height: 72,
+          background: isRecording ? '#FF2D2D' : isTranscribing ? 'rgba(212,255,0,0.15)' : '#D4FF00',
+          boxShadow: isRecording
+            ? '0 0 0 4px rgba(255,45,45,0.3), 0 8px 32px rgba(255,45,45,0.4)'
+            : '0 4px 24px rgba(212,255,0,0.4)',
+        }}
+      >
+        <span style={{ fontSize: 28 }}>
+          {isTranscribing ? '⏳' : isRecording ? '⏹' : '🎙️'}
+        </span>
+      </span>
+      <span
+        className={[
+          'font-condensed font-bold text-[12px] tracking-[2px] uppercase transition-colors duration-200',
+          !isRecording && !isTranscribing && 'group-hover:text-white',
+        ].filter(Boolean).join(' ')}
+        style={{ color: isRecording ? '#FF2D2D' : '#D4FF00' }}
+      >
+        {isTranscribing ? 'Processing…' : isRecording ? 'Stop' : 'Talk to SafeGuide'}
+      </span>
+    </button>
+  )
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [voiceTranscript, setVoiceTranscript] = useState<string | undefined>()
+
+  function openGuideWithVoice(transcript: string) {
+    setVoiceTranscript(transcript)
+    setGuideOpen(true)
+  }
+
+  function closeGuide() {
+    setGuideOpen(false)
+    setVoiceTranscript(undefined)
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -123,6 +271,7 @@ export default function LandingPage() {
 
       {/* ─── NAV ─── */}
       <nav
+        aria-label="Main navigation"
         className={`fixed top-0 inset-x-0 z-[9000] h-16 flex items-center justify-between px-8 transition-all duration-300 ${
           scrolled
             ? 'bg-ink/95 backdrop-blur-md border-b border-white/[0.06]'
@@ -158,13 +307,15 @@ export default function LandingPage() {
               <Link
                 key={href}
                 href={href}
-                className="font-condensed font-semibold text-[13px] tracking-[2px] text-steel uppercase px-4 py-2 transition-colors duration-200 hover:text-snow"
+                className="font-condensed font-semibold text-[13px] tracking-[2px] text-steel uppercase px-4 py-2 rounded-[4px] transition-all duration-200 hover:text-snow hover:bg-white/[0.07]"
               >
                 {label}
               </Link>
             ))}
           </div>
-          <TourButton />
+          <Suspense fallback={<p>loading...</p>}>
+            <TourButton />
+          </Suspense>
           <Link
             href="/authority/login"
             className="font-condensed font-bold text-[13px] tracking-[2px] text-ink bg-brand uppercase px-4 md:px-5 py-[9px] rounded-[4px] ml-2 transition-[background,transform] duration-150 hover:bg-brand-dark hover:-translate-y-px"
@@ -176,7 +327,7 @@ export default function LandingPage() {
       </nav>
 
       {/* ─── HERO ─── */}
-      <section data-tour="tour-hero" className="relative w-full h-screen min-h-[640px] overflow-hidden">
+      <section data-tour="tour-hero" aria-label="SafeReport — Jamaica Community Safety Network" className="relative w-full h-screen min-h-[640px] overflow-hidden">
 
         {/* Live map — full bleed background */}
         <div className="absolute inset-0 z-[1]">
@@ -226,7 +377,7 @@ export default function LandingPage() {
           </p>
 
           {/* CTAs */}
-          <div className="flex gap-3 mt-9 flex-wrap">
+          <div className="flex gap-3 mt-9 flex-wrap items-center">
             <Link
               href="/map"
               className="font-condensed font-bold text-[16px] tracking-[2px] text-ink bg-brand uppercase px-8 py-[14px] rounded-[4px] inline-block shadow-[0_4px_24px_rgba(212,255,0,0.35)] transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(212,255,0,0.5)]"
@@ -242,8 +393,21 @@ export default function LandingPage() {
             </Link>
           </div>
 
+          {/* Voice CTA */}
+          <div className="mt-10 flex items-center gap-6">
+            <LandingVoiceButton onTranscript={openGuideWithVoice} />
+            <div className="border-l border-white/10 pl-6">
+              <p className="font-condensed font-semibold text-[13px] tracking-[0.5px] text-snow m-0">
+                Speak your report in Patois or English
+              </p>
+              <p className="font-data text-[10px] tracking-[1.5px] text-fog mt-1 m-0 uppercase">
+                SafeGuide will handle the rest — yuh nuh haffi type
+              </p>
+            </div>
+          </div>
+
           {/* Stats */}
-          <div className="flex gap-6 sm:gap-8 mt-10 sm:mt-12 flex-wrap">
+          <div className="flex gap-6 sm:gap-8 mt-10 mb-15 sm:mt-12 flex-wrap">
             {[
               { value: '14',   label: 'PARISHES'  },
               { value: '6',    label: 'AGENCIES'  },
@@ -258,13 +422,34 @@ export default function LandingPage() {
         </div>
 
         {/* Incident ticker */}
-        <div data-tour="tour-ticker" className="absolute bottom-0 inset-x-0 z-[5] bg-ink/92 border-t border-brand/15 h-11 overflow-hidden flex items-center">
+        <div
+          data-tour="tour-ticker"
+          role="marquee"
+          aria-label="Live incident feed"
+          aria-live="off"
+          className="absolute bottom-0 inset-x-0 z-[5] bg-ink/92 border-t border-brand/15 h-11 overflow-hidden flex items-center"
+        >
           <div
-            className="flex items-center whitespace-nowrap"
+            className="ticker-track flex items-center whitespace-nowrap"
             style={{ animation: 'ticker 40s linear infinite' }}
           >
-            {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            {TICKER_ITEMS.map((item, i) => (
               <span key={i} className="inline-flex items-center gap-3 px-6 whitespace-nowrap">
+                <span
+                  className="font-data text-[10px] font-bold tracking-[2px]"
+                  style={{ color: SEVERITY_TEXT_COLORS[item.severity] ?? '#8A9BC0' }}
+                >
+                  {item.severity}
+                </span>
+                <span className="text-base" aria-hidden="true">{item.icon}</span>
+                <span className="font-body text-[13px] text-snow">{item.text}</span>
+                <span className="font-data text-[10px] text-fog">— {item.parish}</span>
+                <span className="text-[#1A2235] ml-3" aria-hidden="true">|</span>
+              </span>
+            ))}
+            {/* Duplicate items are purely visual for seamless loop — hidden from AT */}
+            {TICKER_ITEMS.map((item, i) => (
+              <span key={`dup-${i}`} aria-hidden="true" className="inline-flex items-center gap-3 px-6 whitespace-nowrap">
                 <span
                   className="font-data text-[10px] font-bold tracking-[2px]"
                   style={{ color: SEVERITY_TEXT_COLORS[item.severity] ?? '#8A9BC0' }}
@@ -309,9 +494,10 @@ export default function LandingPage() {
                   {step.num}
                 </div>
                 <div className="text-[36px] mb-5">{step.icon}</div>
-                <h3 className="font-condensed font-bold text-[22px] tracking-[1px] uppercase text-snow m-0 mb-4">
+                <h3 className="font-condensed font-bold text-[22px] tracking-[1px] uppercase text-snow m-0 mb-1">
                   {step.title}
                 </h3>
+                <p className="font-data text-[10px] tracking-[1.5px] text-brand/70 uppercase mb-4 m-0">{step.patois}</p>
                 <p className="font-body text-[15px] text-steel leading-[1.65] m-0">{step.body}</p>
               </div>
             ))}
@@ -319,8 +505,126 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── SAFEGUIDE AGENT ─── */}
+      <section data-tour="tour-safeguide-section" className="bg-ink border-t border-white/[0.04] py-24 px-8 md:px-12">
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+          {/* Left — copy */}
+          <div>
+            <p className="font-data text-[11px] tracking-[3px] text-brand uppercase mb-3">AI SAFETY AGENT · SafeGuide</p>
+            <h2
+              className="font-condensed font-bold uppercase text-snow leading-[0.95] tracking-[-0.5px] m-0 mb-2"
+              style={{ fontSize: 'clamp(36px, 4.5vw, 58px)' }}
+            >
+              MI DEH YAH<br />
+              FI <span className="text-brand">HELP YUH</span>
+            </h2>
+            <p className="font-data text-[10px] tracking-[2px] text-fog/60 uppercase mb-6">
+              (I&apos;m here to help you)
+            </p>
+            <p className="font-body text-[15px] text-steel leading-[1.65] m-0 mb-8 max-w-[420px]">
+              SafeGuide chat inna Patois or English. Tell it weh happen and it classify, route, and submit yuh report — all inna less than a minute.
+            </p>
+
+            {/* Capabilities */}
+            <ul className="list-none m-0 p-0 flex flex-col gap-3 mb-10">
+              {[
+                { icon: '🎙️', label: 'Voice or text',            desc: 'Speak or type — Patois or English' },
+                { icon: '💬', label: 'Conversational reporting',  desc: 'Nuh form to fill — just tell it weh happen' },
+                { icon: '🔍', label: 'Ticket status lookup',      desc: 'Ask "weh happen to SR-XXXXXX?" anytime' },
+                { icon: '📡', label: 'Live submission',           desc: 'Directly submits to the SafeReport network' },
+              ].map(({ icon, label, desc }) => (
+                <li key={label} className="flex items-start gap-4">
+                  <span className="text-[20px] mt-0.5 shrink-0">{icon}</span>
+                  <div>
+                    <span className="font-condensed font-semibold text-[14px] tracking-[0.5px] uppercase text-snow">{label}</span>
+                    <span className="font-body text-[13px] text-fog ml-2">{desc}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="flex items-center gap-6 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setGuideOpen(true)}
+                className="font-condensed font-bold text-[15px] tracking-[2px] text-ink bg-brand uppercase px-8 py-[14px] rounded-[4px] inline-block shadow-[0_4px_24px_rgba(212,255,0,0.3)] transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(212,255,0,0.5)]"
+              >
+                CHAT WITH SAFEGUIDE →
+              </button>
+              <LandingVoiceButton onTranscript={openGuideWithVoice} />
+            </div>
+          </div>
+
+          {/* Right — mock chat preview */}
+          <div
+            className="rounded-2xl overflow-hidden border border-white/[0.08]"
+            style={{ background: 'var(--surface-raised, #141820)' }}
+          >
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
+                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
+                </span>
+                <span className="font-condensed font-bold text-[13px] tracking-[2px] text-brand uppercase">SAFEGUIDE</span>
+                <span className="font-data text-[10px] text-fog">AI Safety Agent</span>
+              </div>
+              <span className="font-data text-[10px] tracking-[1px] text-fog/50 uppercase">Preview</span>
+            </div>
+
+            {/* Messages */}
+            <div className="px-4 py-5 flex flex-col gap-3">
+              {MOCK_CHAT.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className="max-w-[78%] px-3 py-2 rounded-xl text-[13px] leading-[1.55]"
+                    style={{
+                      background: msg.role === 'user' ? '#D4FF00' : 'rgba(255,255,255,0.06)',
+                      color:      msg.role === 'user' ? '#0A0A0A' : '#C8D3E8',
+                      borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                      overflowWrap: 'break-word',
+                    }}
+                  >
+                    {/* Render inline bold without pulling in a markdown lib */}
+                    {msg.text.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
+                      part.startsWith('**') && part.endsWith('**')
+                        ? <strong key={j} className="font-semibold">{part.slice(2, -2)}</strong>
+                        : <span key={j}>{part}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Fake input bar */}
+            <div className="px-4 pb-4">
+              <div
+                className="flex items-center gap-3 px-4 py-3 rounded-xl border border-white/[0.06]"
+                style={{ background: 'rgba(255,255,255,0.03)' }}
+              >
+                <span className="font-body text-[13px] text-fog/40 flex-1">Type or speak…</span>
+                <button
+                  type="button"
+                  onClick={() => { setVoiceTranscript(undefined); setGuideOpen(true) }}
+                  aria-label="Open SafeGuide chat"
+                  className="font-condensed font-bold text-[12px] tracking-[1.5px] text-ink bg-brand uppercase px-4 py-1.5 rounded-lg transition-opacity hover:opacity-90"
+                >
+                  START
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
       {/* ─── CATEGORIES ─── */}
-      <section className="bg-ink border-t border-white/[0.04] py-24 px-8 md:px-12">
+      <section data-tour="tour-categories-section" className="bg-ink border-t border-white/[0.04] py-24 px-8 md:px-12">
         <div className="max-w-[1100px] mx-auto">
 
           <div className="flex items-end justify-between flex-wrap gap-4 mb-12">
@@ -465,6 +769,8 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
+
+      {guideOpen && <SafeGuideChat onClose={closeGuide} initialMessage={voiceTranscript} />}
 
     </div>
     </TourProvider>
