@@ -121,8 +121,7 @@ describe('POST /api/tts', () => {
     expect(url).toBe('https://eastus.tts.speech.microsoft.com/cognitiveservices/v1')
     expect(options.headers['Ocp-Apim-Subscription-Key']).toBe('test-azure-key')
     expect(options.headers['X-Microsoft-OutputFormat']).toBe('audio-16khz-128kbitrate-mono-mp3')
-    expect(options.body).toContain('en-JM-EthanNeural')
-    expect(options.body).toContain('en-JM')
+    expect(options.body).toContain('en-US-GuyNeural')
   })
 
   it('truncates text longer than 2000 characters before sending to Claude', async () => {

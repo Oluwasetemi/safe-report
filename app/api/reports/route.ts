@@ -47,6 +47,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (hasCoords && (
+      !Number.isFinite(lat) || !Number.isFinite(lng) ||
+      lat! < -90 || lat! > 90 || lng! < -180 || lng! > 180
+    )) {
+      return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
+    }
+
     const supabase = createServiceSupabaseClient()
 
     // Hash fingerprint

@@ -25,7 +25,8 @@ export async function GET(request: Request) {
     let fontData: ArrayBuffer | null = null
     try {
       const baseUrl = new URL(request.url).origin
-      fontData = await fetch(`${baseUrl}/barlow-condensed-700.woff2`).then(r => r.arrayBuffer())
+      const fontRes = await fetch(`${baseUrl}/barlow-condensed-700.woff2`)
+      if (fontRes.ok) fontData = await fontRes.arrayBuffer()
     } catch { /* fall back to system sans-serif */ }
 
     const ff = fontData ? 'Barlow Condensed' : 'sans-serif'

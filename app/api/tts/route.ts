@@ -131,7 +131,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Step 2b: Azure TTS (fallback) ────────────────────────────────────────
-  const voices = ['en-JM-LiamNeural', 'en-US-GuyNeural']
+  // en-JM voices are not available in Azure Cognitive Services; fall back to en-US
+  const voices = ['en-US-GuyNeural']
 
   let azureRes: Response | null = null
   for (const voice of voices) {

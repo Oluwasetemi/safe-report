@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useId } from 'react'
 
 interface PhotoUploadProps {
   onPhotos: (urls: string[]) => void
@@ -16,6 +16,7 @@ interface PhotoEntry {
 export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
   const [photos, setPhotos] = useState<PhotoEntry[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+  const uploadId = useId()
 
   function notifyParent(entries: PhotoEntry[]) {
     const uploaded = entries.filter(p => p.url).map(p => p.url)
@@ -100,7 +101,7 @@ export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
       {/* Add more / initial button */}
       <input
         ref={inputRef}
-        id="photo-upload-input"
+        id={uploadId}
         type="file"
         accept="image/*"
         multiple
@@ -110,7 +111,7 @@ export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
       />
       <button
         type="button"
-        aria-controls="photo-upload-input"
+        aria-controls={uploadId}
         aria-label={anyUploading ? 'Uploading photos, please wait' : photos.length ? 'Add more photos' : 'Add photos (optional)'}
         onClick={() => inputRef.current?.click()}
         disabled={anyUploading}

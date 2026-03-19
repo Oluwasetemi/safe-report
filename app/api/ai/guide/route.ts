@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
           const { data, error } = await supabase
             .from('reports')
             .select('id, ticket_number, status, category, subcategory, severity, ai_summary, address, parish, created_at, acknowledged_at, resolved_at, departments_alerted, police_ref_number')
-            .ilike('ticket_number', ticketNumber.trim())
-            .single()
+            .eq('ticket_number', ticketNumber.trim().toUpperCase())
+            .maybeSingle()
 
           if (error || !data) {
             return { found: false, ticketNumber }
@@ -71,20 +71,31 @@ export async function POST(req: NextRequest) {
           parish: z.string().optional().describe('Jamaica parish name if known'),
         }),
         execute: async ({ description, lat, lng, parish }) => {
-          // Use centre of Jamaica as default when GPS not available
-          const reportLat = lat ?? 18.1096
-          const reportLng = lng ?? -77.2975
+          const hasGps = lat != null && lng != null
+
+          // Require either GPS coords or a parish/address — never fall back to a fake centre point
+          if (!hasGps && !parish) {
+            return { success: false, error: 'Location required — please provide your parish or enable GPS' }
+          }
+
+          const reportBody: Record<string, unknown> = {
+            description,
+            rawFingerprint: 'safeguide-agent',
+            ...(parish ? { parish } : {}),
+          }
+
+          if (hasGps) {
+            reportBody.lat = lat
+            reportBody.lng = lng
+          } else {
+            // Forward-geocode via address using the parish name
+            reportBody.address = `${parish}, Jamaica`
+          }
 
           const res = await fetch(`${origin}/api/reports`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({
-              description,
-              lat:            reportLat,
-              lng:            reportLng,
-              parish,
-              rawFingerprint: 'safeguide-agent',
-            }),
+            body:    JSON.stringify(reportBody),
           })
 
           if (!res.ok) {

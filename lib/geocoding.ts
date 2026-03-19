@@ -23,11 +23,13 @@ export function normalizeParish(raw: string): string {
 export async function forwardGeocode(
   address: string
 ): Promise<{ lat: number; lng: number; address: string; parish: string } | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 3000)
   try {
     const q = encodeURIComponent(`${address}, Jamaica`)
     const res = await fetch(
       `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=jm`,
-      { headers: { 'User-Agent': 'SafeReport/1.0 (safereport.app)' } }
+      { headers: { 'User-Agent': 'SafeReport/1.0 (safereport.app)' }, signal: controller.signal }
     )
     if (!res.ok) return null
 
@@ -53,6 +55,8 @@ export async function forwardGeocode(
     return { lat, lng, address: top.display_name ?? address, parish }
   } catch {
     return null
+  } finally {
+    clearTimeout(timeout)
   }
 }
 

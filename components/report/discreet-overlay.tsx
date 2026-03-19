@@ -1,12 +1,20 @@
 'use client'
 
+import { useRef, useEffect } from 'react'
+
 export function DiscreetOverlay({ onExit }: { onExit: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    dialogRef.current?.focus()
+  }, [])
+
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-label="Discreet mode — tap top-left corner or press Escape to exit"
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-      tabIndex={0}
+      tabIndex={-1}
       style={{ position: 'fixed', inset: 0, background: '#fff', zIndex: 9999, padding: 24, outline: 'none' }}
       onClick={(e) => {
         const { clientX, clientY } = e

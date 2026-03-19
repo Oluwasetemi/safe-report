@@ -55,8 +55,10 @@ export default function LiveMapPage() {
         <div data-tour="tour-alerts-wrapper" className="absolute top-4 right-4 z-[1000]">
           {push.status !== 'unsupported' && (
             <button
-              onClick={push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+              onClick={push.status === 'denied' ? undefined : push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+              disabled={push.status === 'denied'}
               title={push.status === 'denied' ? 'Add to home screen to enable notifications on iOS' : undefined}
+              aria-disabled={push.status === 'denied'}
               className={[
                 'flex items-center gap-2 rounded-full pl-3 pr-4 py-2.5 text-[13px] font-semibold',
                 'backdrop-blur-sm shadow-lg border transition-all duration-200 active:scale-95',

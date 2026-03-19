@@ -19,7 +19,7 @@ export function DiscreetModeToggle({ enabled, onToggle }: DiscreetModeToggleProp
           type="button"
           role="switch"
           aria-checked={enabled}
-          aria-label="Enable discreet mode"
+          aria-label={enabled ? 'Disable discreet mode' : 'Enable discreet mode'}
           onClick={onToggle}
           style={{
             width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
