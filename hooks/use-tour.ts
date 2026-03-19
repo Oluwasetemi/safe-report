@@ -2,7 +2,6 @@
 'use client'
 
 import { useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 
 const LS_ACTIVE = 'safereport-tour-active'
 const LS_STEP   = 'safereport-tour-step'
@@ -25,16 +24,16 @@ export interface UseTourReturn {
 }
 
 export function useTour(): UseTourReturn {
-  const router = useRouter()
-
   const isFirstVisit = ls(LS_SEEN) !== '1'
 
   const startTour = useCallback(() => {
     lsRemove(LS_SEEN)
     lsSet(LS_STEP, '0')
     lsSet(LS_ACTIVE, '1')
-    router.push('/')
-  }, [router])
+    // Use full navigation so the landing page remounts and the tour effect re-fires.
+    // router.push('/') won't remount the page (and the started ref) if already on /.
+    window.location.assign('/')
+  }, [])
 
   const restartTour = startTour
 
