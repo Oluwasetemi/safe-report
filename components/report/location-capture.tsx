@@ -28,6 +28,13 @@ export function LocationCapture({ onLocation }: LocationCaptureProps) {
   return (
     <div>
       <button type="button" onClick={capture}
+        aria-label={
+          status === 'idle'    ? 'Capture my location' :
+          status === 'loading' ? 'Getting location, please wait' :
+          status === 'success' ? `Location captured: ${coords?.lat.toFixed(4)}, ${coords?.lng.toFixed(4)}` :
+                                 'Location failed — tap to retry'
+        }
+        aria-live="polite"
         style={{
           background:   status === 'success' ? 'var(--severity-low)' : 'var(--surface-card)',
           color:        status === 'success' ? '#0A0A0A' : 'var(--text-primary)',
@@ -41,10 +48,12 @@ export function LocationCapture({ onLocation }: LocationCaptureProps) {
           width:         '100%',
         }}
       >
-        {status === 'idle' && '📍 Capture My Location'}
-        {status === 'loading' && '⏳ Getting location...'}
-        {status === 'success' && `✅ Location captured (${coords?.lat.toFixed(4)}, ${coords?.lng.toFixed(4)})`}
-        {status === 'error' && '❌ Location failed — tap to retry'}
+        <span aria-hidden="true">
+          {status === 'idle' && '📍 Capture My Location'}
+          {status === 'loading' && '⏳ Getting location…'}
+          {status === 'success' && `✅ Location captured (${coords?.lat.toFixed(4)}, ${coords?.lng.toFixed(4)})`}
+          {status === 'error' && '❌ Location failed — tap to retry'}
+        </span>
       </button>
     </div>
   )

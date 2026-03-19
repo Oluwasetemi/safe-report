@@ -15,12 +15,19 @@ export function DiscreetModeToggle({ enabled, onToggle }: DiscreetModeToggleProp
             Hides app — shows notes screen if someone looks
           </p>
         </div>
-        <button onClick={onToggle} style={{
-          width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-          background: enabled ? 'var(--brand-primary)' : 'var(--border)',
-          position: 'relative', transition: 'background 0.2s',
-        }}>
-          <span style={{
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Enable discreet mode"
+          onClick={onToggle}
+          style={{
+            width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+            background: enabled ? 'var(--brand-primary)' : 'var(--border)',
+            position: 'relative', transition: 'background 0.2s',
+          }}
+        >
+          <span aria-hidden="true" style={{
             position: 'absolute', top: 2,
             left: enabled ? 22 : 2,
             width: 20, height: 20, borderRadius: '50%',

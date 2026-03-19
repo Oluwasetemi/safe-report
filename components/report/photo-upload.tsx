@@ -70,25 +70,26 @@ export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
       {/* Photo grid */}
       {photos.length > 0 && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 10 }}>
-          {photos.map(photo => (
+          {photos.map((photo, idx) => (
             <div key={photo.id} style={{ position: 'relative', borderRadius: 8, overflow: 'hidden', aspectRatio: '1', background: 'var(--surface-card)' }}>
               <img
                 src={photo.preview}
-                alt="Report photo"
+                alt={`Report photo ${idx + 1}`}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
               {photo.uploading && (
-                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: '#fff', fontSize: 11, fontFamily: 'var(--font-barlow-condensed)' }}>UPLOADING</span>
+                <div role="status" aria-label={`Uploading photo ${idx + 1}`} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span aria-hidden="true" style={{ color: '#fff', fontSize: 11, fontFamily: 'var(--font-barlow-condensed)' }}>UPLOADING</span>
                 </div>
               )}
               {!photo.uploading && (
                 <button
                   type="button"
+                  aria-label={`Remove photo ${idx + 1}`}
                   onClick={() => remove(photo.id)}
                   style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', border: 'none', borderRadius: '50%', width: 22, height: 22, cursor: 'pointer', fontSize: 12, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  ✕
+                  <span aria-hidden="true">✕</span>
                 </button>
               )}
             </div>
@@ -99,14 +100,18 @@ export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
       {/* Add more / initial button */}
       <input
         ref={inputRef}
+        id="photo-upload-input"
         type="file"
         accept="image/*"
         multiple
+        aria-label="Upload report photos"
         style={{ display: 'none' }}
         onChange={(e) => e.target.files?.length && handleFiles(e.target.files)}
       />
       <button
         type="button"
+        aria-controls="photo-upload-input"
+        aria-label={anyUploading ? 'Uploading photos, please wait' : photos.length ? 'Add more photos' : 'Add photos (optional)'}
         onClick={() => inputRef.current?.click()}
         disabled={anyUploading}
         style={{
@@ -121,7 +126,7 @@ export function PhotoUpload({ onPhotos }: PhotoUploadProps) {
           fontSize: 14,
         }}
       >
-        {anyUploading ? 'Uploading...' : photos.length ? '+ Add more photos' : '📷 Add photos (optional)'}
+        {anyUploading ? 'Uploading…' : photos.length ? '+ Add more photos' : '📷 Add photos (optional)'}
       </button>
     </div>
   )
