@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateText } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
 
 const MAX_TEXT_LENGTH = 2000
 
@@ -13,6 +14,44 @@ function escapeXml(str: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
+}
+
+/** Strip markdown syntax, emoji, and normalise whitespace before sending to Azure. */
+function cleanForTts(str: string): string {
+  return str
+    // Remove markdown bold/italic
+    .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
+    // Remove markdown headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove emoji (Unicode ranges for common emoji blocks)
+    // eslint-disable-next-line no-misleading-character-class
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/gu, '')
+    // Collapse multiple blank lines to a single space
+    .replace(/\n{2,}/g, ' ')
+    .replace(/\n/g, ' ')
+    .trim()
+}
+
+async function azureTts(
+  text: string,
+  voice: string,
+  region: string,
+  key: string,
+): Promise<Response> {
+  const ssml = `<speak version='1.0' xml:lang='en-US'><voice name='${voice}'>${escapeXml(text)}</voice></speak>`
+  console.log('[tts] Azure request — region:', region, 'voice:', voice)
+  return fetch(
+    `https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`,
+    {
+      method: 'POST',
+      headers: {
+        'Ocp-Apim-Subscription-Key': key,
+        'X-Microsoft-OutputFormat':  'audio-16khz-128kbitrate-mono-mp3',
+        'Content-Type':              'application/ssml+xml',
+      },
+      body: ssml,
+    }
+  )
 }
 
 export async function POST(req: NextRequest) {
@@ -54,33 +93,59 @@ export async function POST(req: NextRequest) {
   // Header carries pre-processed text so client can use it for speechSynthesis fallback
   const ttsTextHeader = Buffer.from(rewrittenText, 'utf-8').toString('base64')
 
-  // ── Step 2: Azure TTS ────────────────────────────────────────────────────
-  const ssml = `<speak version='1.0' xml:lang='en-JM'><voice name='en-JM-EthanNeural'>${escapeXml(rewrittenText)}</voice></speak>`
+  const cleanText = cleanForTts(rewrittenText)
 
-  let azureRes: Response
-  try {
-    azureRes = await fetch(
-      `https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,
-      {
-        method: 'POST',
-        headers: {
-          'Ocp-Apim-Subscription-Key': azureKey,
-          'X-Microsoft-OutputFormat':  'audio-16khz-128kbitrate-mono-mp3',
-          'Content-Type':              'application/ssml+xml',
-        },
-        body: ssml,
+  // ── Step 2a: ElevenLabs TTS (primary) ────────────────────────────────────
+  const elevenKey  = process.env.ELEVENLABS_API_KEY
+  const elevenVoice = process.env.ELEVENLABS_VOICE_ID ?? 'pNInz6obpgDQGcFmaJgB' // Adam
+
+  if (elevenKey) {
+    try {
+      const eleven = new ElevenLabsClient({ apiKey: elevenKey })
+      const audioStream = await eleven.textToSpeech.convert(elevenVoice, {
+        text: cleanText,
+        modelId: 'eleven_multilingual_v2',
+        outputFormat: 'mp3_44100_128',
+      })
+      // audioStream is a ReadableStream<Uint8Array>
+      const chunks: Uint8Array[] = []
+      const reader = (audioStream as ReadableStream<Uint8Array>).getReader()
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        if (value) chunks.push(value)
       }
-    )
-  } catch (e) {
-    console.error('[tts] Azure fetch failed:', e)
-    return NextResponse.json(
-      { error: 'TTS service unavailable' },
-      { status: 502, headers: { 'X-Tts-Text': ttsTextHeader } }
-    )
+      const total = chunks.reduce((a, c) => a + c.byteLength, 0)
+      const merged = new Uint8Array(total)
+      let offset = 0
+      for (const c of chunks) { merged.set(c, offset); offset += c.byteLength }
+
+      console.log('[tts] ElevenLabs success — bytes:', total)
+      return new NextResponse(merged.buffer, {
+        status: 200,
+        headers: { 'Content-Type': 'audio/mpeg', 'X-Tts-Text': ttsTextHeader },
+      })
+    } catch (e) {
+      console.warn('[tts] ElevenLabs failed, falling back to Azure:', e)
+    }
   }
 
-  if (!azureRes.ok) {
-    console.error('[tts] Azure error:', azureRes.status, await azureRes.text())
+  // ── Step 2b: Azure TTS (fallback) ────────────────────────────────────────
+  const voices = ['en-JM-LiamNeural', 'en-US-GuyNeural']
+
+  let azureRes: Response | null = null
+  for (const voice of voices) {
+    try {
+      const res = await azureTts(cleanText, voice, azureRegion, azureKey)
+      if (res.ok) { azureRes = res; break }
+      const body = await res.text()
+      console.warn(`[tts] Azure voice ${voice} failed — status: ${res.status} | body: ${body}`)
+    } catch (e) {
+      console.error(`[tts] Azure fetch error for voice ${voice}:`, e)
+    }
+  }
+
+  if (!azureRes) {
     return NextResponse.json(
       { error: 'TTS service unavailable' },
       { status: 502, headers: { 'X-Tts-Text': ttsTextHeader } }

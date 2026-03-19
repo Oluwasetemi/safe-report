@@ -21,19 +21,12 @@ export async function GET(request: Request) {
     const titleSize = title.length > 50 ? 52 : title.length > 30 ? 64 : 76
     const words = title.split(' ')
 
-    // Fetch Barlow Condensed 700 from Google Fonts
+    // Load Barlow Condensed 700 from the local public asset (cached, no external round-trip)
     let fontData: ArrayBuffer | null = null
     try {
-      const cssRes = await fetch(
-        'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&display=swap',
-        { headers: { 'User-Agent': 'Mozilla/5.0 (compatible)' } }
-      )
-      const css = await cssRes.text()
-      const match = css.match(/src:\s*url\(([^)]+\.woff2)\)/)
-      if (match) {
-        fontData = await fetch(match[1]).then(r => r.arrayBuffer())
-      }
-    } catch { /* use system font */ }
+      const baseUrl = new URL(request.url).origin
+      fontData = await fetch(`${baseUrl}/barlow-condensed-700.woff2`).then(r => r.arrayBuffer())
+    } catch { /* fall back to system sans-serif */ }
 
     const ff = fontData ? 'Barlow Condensed' : 'sans-serif'
 

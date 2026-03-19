@@ -13,7 +13,8 @@ export async function POST(req: NextRequest) {
 
     const result = await transcribe({
       model: openai.transcription('whisper-1'),
-      audio,
+      audio: new Uint8Array(await audio.arrayBuffer()),
+      mimeType: audio.type || 'audio/webm',
     })
 
     return NextResponse.json({ transcript: result.text })
