@@ -1,8 +1,14 @@
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { SidebarNav } from '@/components/authority/sidebar-nav'
 
 export default async function AuthorityLayout({ children }: { children: React.ReactNode }) {
+  // Skip auth check for the login page itself to prevent redirect loop
+  const headersList = await headers()
+  const pathname = headersList.get('x-pathname') ?? ''
+  if (pathname === '/authority/login') return <>{children}</>
+
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
