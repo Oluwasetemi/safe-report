@@ -31,6 +31,7 @@
 }
 
 :root {
+  color-scheme: dark;
   /* Hi-Vis Signal brand */
   --brand-primary: #D4FF00;      /* Chartreuse */
   --brand-primary-dark: #AACC00;
@@ -56,6 +57,46 @@ body {
   background-color: var(--brand-black);
   color: var(--text-primary);
   font-family: var(--font-barlow), sans-serif;
+}
+
+/* Skip navigation link */
+.skip-nav {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 99999;
+}
+.skip-nav:focus {
+  left: 8px;
+  top: 8px;
+  width: auto;
+  height: auto;
+  padding: 12px 20px;
+  background: var(--brand-primary);
+  color: var(--brand-black);
+  font-family: var(--font-barlow-condensed), sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  border-radius: 4px;
+  outline: 2px solid var(--brand-black);
+}
+
+/* Global focus-visible ring — applies to elements that don't define their own */
+:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+/* Stop ticker for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none !important;
+  }
 }
 
 /* Severity badge utilities */

@@ -31,11 +31,17 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-barlow-condensed)', letterSpacing: 1, marginBottom: 6 }}>
+        <label
+          htmlFor="login-email"
+          style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-barlow-condensed)', letterSpacing: 1, marginBottom: 6 }}
+        >
           EMAIL
         </label>
         <input
+          id="login-email"
           type="email"
+          name="email"
+          autoComplete="email"
           placeholder="Email address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -44,11 +50,17 @@ export function LoginForm() {
         />
       </div>
       <div>
-        <label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-barlow-condensed)', letterSpacing: 1, marginBottom: 6 }}>
+        <label
+          htmlFor="login-password"
+          style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', fontFamily: 'var(--font-barlow-condensed)', letterSpacing: 1, marginBottom: 6 }}
+        >
           PASSWORD
         </label>
         <input
+          id="login-password"
           type="password"
+          name="password"
+          autoComplete="current-password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -57,25 +69,25 @@ export function LoginForm() {
         />
       </div>
       {error && (
-        <p style={{ color: 'var(--severity-critical)', fontSize: 13, margin: 0 }}>{error}</p>
+        <p role="alert" style={{ color: 'var(--severity-critical)', fontSize: 13, margin: 0 }}>{error}</p>
       )}
       <button
         type="submit"
-        disabled={!email || !password || loading}
+        disabled={loading}
         style={{
-          padding:      '14px',
-          background:   (!email || !password || loading) ? 'var(--border)' : 'var(--brand-primary)',
-          color:        '#0A0A0A',
-          border:       'none',
-          borderRadius:  8,
-          fontFamily:   'var(--font-barlow-condensed)',
-          fontWeight:    700,
-          fontSize:      16,
-          cursor:        (!email || !password || loading) ? 'not-allowed' : 'pointer',
+          padding:       '14px',
+          background:    loading ? 'var(--border)' : 'var(--brand-primary)',
+          color:         '#0A0A0A',
+          border:        'none',
+          borderRadius:   8,
+          fontFamily:    'var(--font-barlow-condensed)',
+          fontWeight:     700,
+          fontSize:       16,
+          cursor:         loading ? 'not-allowed' : 'pointer',
           letterSpacing:  1,
         }}
       >
-        {loading ? 'SIGNING IN...' : 'SIGN IN'}
+        {loading ? 'SIGNING IN…' : 'SIGN IN'}
       </button>
     </form>
   )

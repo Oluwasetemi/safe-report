@@ -52,14 +52,30 @@ export default function LiveMapPage() {
         >
           ← Home
         </Link>
-        <div data-tour="tour-alerts-wrapper">
+        <div data-tour="tour-alerts-wrapper" className="absolute top-4 right-4 z-[1000]">
           {push.status !== 'unsupported' && (
             <button
-              onClick={push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+              onClick={push.status === 'denied' ? undefined : push.status === 'subscribed' ? push.unsubscribe : push.subscribe}
+              disabled={push.status === 'denied'}
               title={push.status === 'denied' ? 'Add to home screen to enable notifications on iOS' : undefined}
-              className="absolute top-4 right-4 z-[1000] bg-white rounded-full px-3 py-2 text-sm text-black shadow-md border border-gray-200"
+              aria-disabled={push.status === 'denied'}
+              className={[
+                'flex items-center gap-2 rounded-full pl-3 pr-4 py-2.5 text-[13px] font-semibold',
+                'backdrop-blur-sm shadow-lg border transition-all duration-200 active:scale-95',
+                push.status === 'subscribed'
+                  ? 'bg-[#00C853]/20 text-[#00C853] border-[#00C853]/40 hover:bg-[#00C853]/30'
+                  : push.status === 'denied'
+                    ? 'bg-black/60 text-white/40 border-white/10 cursor-not-allowed'
+                    : 'bg-black/80 text-white border-[#D4FF00]/60 hover:border-[#D4FF00] hover:bg-black/90',
+              ].join(' ')}
             >
-              {push.status === 'subscribed' ? '🔔 Alerts on' : push.status === 'denied' ? '🔕 Blocked' : '🔔 Nearby alerts'}
+              {push.status !== 'subscribed' && push.status !== 'denied' && (
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4FF00] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D4FF00]" />
+                </span>
+              )}
+              {push.status === 'subscribed' ? '🔔 Alerts On' : push.status === 'denied' ? '🔕 Blocked' : '🔔 Nearby Alerts'}
             </button>
           )}
         </div>

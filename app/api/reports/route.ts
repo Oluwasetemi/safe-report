@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomBytes } from 'crypto'
 import { classifyReport } from '@/lib/ai/classify'
-import { reverseGeocode } from '@/lib/geocoding'
+import { reverseGeocode, forwardGeocode } from '@/lib/geocoding'
 import { hashFingerprint } from '@/lib/fingerprint'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 import { getDepartmentsForCategory } from '@/lib/alerts/routing'
@@ -25,18 +25,33 @@ const RATE_LIMIT_MAX = 5
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { description, lat, lng, rawFingerprint, photoUrl, photoUrls, voiceTranscript } = body
+    const { description, rawFingerprint, photoUrl, photoUrls, voiceTranscript } = body
+    let { lat, lng, address: bodyAddress } = body as { lat?: number; lng?: number; address?: string }
+
     // Prefer the full array; fall back to single URL for backwards compat
     const allPhotoUrls: string[] = Array.isArray(photoUrls) && photoUrls.length
       ? photoUrls
       : photoUrl ? [photoUrl] : []
 
-    // Validate required fields
-    if (!description || typeof lat !== 'number' || typeof lng !== 'number') {
-      return NextResponse.json({ error: 'Missing required fields: description, lat, lng' }, { status: 400 })
+    if (!description || description.length < 10) {
+      return NextResponse.json({ error: 'description is required and must be at least 10 characters' }, { status: 400 })
     }
-    if (description.length < 10) {
-      return NextResponse.json({ error: 'Description too short' }, { status: 400 })
+
+    const hasCoords = typeof lat === 'number' && typeof lng === 'number'
+    const hasAddress = typeof bodyAddress === 'string' && bodyAddress.trim().length > 0
+
+    if (!hasCoords && !hasAddress) {
+      return NextResponse.json(
+        { error: 'Provide either (lat, lng) coordinates or an address string' },
+        { status: 400 }
+      )
+    }
+
+    if (hasCoords && (
+      !Number.isFinite(lat) || !Number.isFinite(lng) ||
+      lat! < -90 || lat! > 90 || lng! < -180 || lng! > 180
+    )) {
+      return NextResponse.json({ error: 'Coordinates out of valid range' }, { status: 400 })
     }
 
     const supabase = createServiceSupabaseClient()
@@ -59,9 +74,29 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Geocode first — parish is needed for accurate AI classification
-    const { address, parish } = await reverseGeocode(lat, lng)
-    const finalClassification = await classifyReport({ description, parish, lat, lng })
+    // Resolve coordinates + address/parish
+    let address: string
+    let parish: string
+
+    if (hasCoords) {
+      // lat/lng provided — reverse geocode to get human address + parish
+      ;({ address, parish } = await reverseGeocode(lat!, lng!))
+    } else {
+      // Address-only submission — forward geocode to extract lat/lng
+      const geocoded = await forwardGeocode(bodyAddress!)
+      if (!geocoded) {
+        return NextResponse.json(
+          { error: `Could not resolve coordinates for address: "${bodyAddress}". Try adding a parish or landmark.` },
+          { status: 422 }
+        )
+      }
+      lat     = geocoded.lat
+      lng     = geocoded.lng
+      address = geocoded.address
+      parish  = geocoded.parish
+    }
+
+    const finalClassification = await classifyReport({ description, parish, lat: lat!, lng: lng! })
 
     // If duplicate, corroborate parent and return
     if (finalClassification.isDuplicate && finalClassification.parentId) {
@@ -91,8 +126,8 @@ export async function POST(req: NextRequest) {
       .from('reports')
       .insert({
         device_fingerprint: fingerprint,
-        lat,
-        lng,
+        lat: lat!,
+        lng: lng!,
         address,
         parish,
         description,
@@ -130,10 +165,10 @@ export async function POST(req: NextRequest) {
       reportId:   report.id,
       category:   report.category,
       severity:   report.severity,
-      address:    address || `${lat}, ${lng}`,
+      address:    address || `${lat!}, ${lng!}`,
       parish:     parish || 'Unknown',
-      lat,
-      lng,
+      lat:        lat!,
+      lng:        lng!,
       aiSummary:  finalClassification.aiSummary,
       timestamp:  report.created_at,
       mapUrl:     `/report/${report.id}`,

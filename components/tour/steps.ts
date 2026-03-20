@@ -2,9 +2,9 @@
 // Pure data — no React, no driver.js import (safe for SSR)
 
 export const PAGE_STEP_RANGES = {
-  landing: { start: 0, end: 3 },
-  map:     { start: 4, end: 7 },
-  report:  { start: 8, end: 9 },
+  landing: { start: 0, end: 7 },
+  map:     { start: 8, end: 11 },
+  report:  { start: 12, end: 13 },
 } as const
 
 export type TourPage = keyof typeof PAGE_STEP_RANGES
@@ -20,7 +20,7 @@ export interface TourStep {
 }
 
 export const TOUR_STEPS: TourStep[] = [
-  // ── Landing (0–3) ─────────────────────────────────────────────────────────
+  // ── Landing (0–7) ─────────────────────────────────────────────────────────
   {
     element: '[data-tour="tour-hero"]',
     popover: {
@@ -40,10 +40,46 @@ export const TOUR_STEPS: TourStep[] = [
     },
   },
   {
+    element: '[data-tour="tour-platform-how-it-works"]',
+    popover: {
+      title: '60 Seconds. Real Response.',
+      description: 'Four phases: DETECT → REPORT → TRIAGE → RESPOND. From the moment you open the app to an officer receiving the alert — under 60 seconds.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
+    element: '[data-tour="tour-transmission-channels"]',
+    popover: {
+      title: '10 Ways to Report',
+      description: 'Web, PWA, and Telegram are live now. WhatsApp, SMS, USSD, Voice IVR, and more launching soon — so anyone on any device or network can report.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
     element: '[data-tour="tour-how-it-works"]',
     popover: {
       title: 'How It Works',
       description: 'You report → AI classifies and routes to the right authority → Authorities respond. Three steps, faster response.',
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
+    element: '[data-tour="tour-safeguide-section"]',
+    popover: {
+      title: 'SafeGuide AI Agent',
+      description: "Chat in Patois or English — SafeGuide classifies and submits your report conversationally. Say 'Big pothole pon Spanish Town Road' and it handles the rest. You can also speak instead of type.",
+      side: 'top',
+      align: 'center',
+    },
+  },
+  {
+    element: '[data-tour="tour-categories-section"]',
+    popover: {
+      title: '13 Incident Categories',
+      description: 'From fire and flooding to crime and road collapse — every incident type is covered. AI automatically routes your report to the right agency: JCF, JFB, NAS, ODPEM, NWA, or JPS.',
       side: 'top',
       align: 'center',
     },
@@ -57,7 +93,7 @@ export const TOUR_STEPS: TourStep[] = [
       align: 'end',
     },
   },
-  // ── Map (4–7) ──────────────────────────────────────────────────────────────
+  // ── Map (8–11) ─────────────────────────────────────────────────────────────
   {
     element: '[data-tour="tour-map"]',
     popover: {
@@ -90,11 +126,11 @@ export const TOUR_STEPS: TourStep[] = [
     popover: {
       title: 'Nearby Alerts',
       description: "Subscribe to get push notifications for incidents within 2km of you — even when the app is closed. Now let's try reporting →",
-      side: 'bottom',
-      align: 'end',
+      side: 'left',
+      align: 'start',
     },
   },
-  // ── Report (8–9) ──────────────────────────────────────────────────────────
+  // ── Report (12–13) ────────────────────────────────────────────────────────
   {
     element: '[data-tour="tour-category"]',
     popover: {

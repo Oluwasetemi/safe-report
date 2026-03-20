@@ -30,18 +30,26 @@ export function TourProvider({ page, mapReady, children }: TourProviderProps) {
   const started = useRef(false)
 
   useEffect(() => {
-    // For map page, wait until Leaflet is ready
-    if (page === 'map' && !mapReady) return
+    console.log('[TourProvider] effect fired — page:', page, '| mapReady:', mapReady, '| started.current:', started.current)
+    console.log('[TourProvider] localStorage —', {
+      active: ls(LS_ACTIVE),
+      step: ls(LS_STEP),
+      seen: ls(LS_SEEN),
+    })
 
-    if (started.current) return
+    // For map page, wait until Leaflet is ready
+    if (page === 'map' && !mapReady) { console.log('[TourProvider] waiting for map'); return }
+
+    if (started.current) { console.log('[TourProvider] already started, bailing'); return }
 
     // Auto-start for first-time visitors on the landing page
     if (page === 'landing' && ls(LS_ACTIVE) !== '1' && ls(LS_SEEN) !== '1') {
+      console.log('[TourProvider] first-time visitor — auto-starting')
       lsSet(LS_STEP, '0')
       lsSet(LS_ACTIVE, '1')
     }
 
-    if (ls(LS_ACTIVE) !== '1') return
+    if (ls(LS_ACTIVE) !== '1') { console.log('[TourProvider] LS_ACTIVE != 1, bailing'); return }
 
     const globalStep = parseInt(ls(LS_STEP) ?? '0', 10)
     const range = PAGE_STEP_RANGES[page]

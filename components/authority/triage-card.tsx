@@ -23,7 +23,7 @@ function SLATimer({ createdAt, severity }: { createdAt: string; severity: Severi
   const overdue = remaining < 0
 
   return (
-    <span style={{ fontSize: 11, fontFamily: 'var(--font-space-mono)', color: overdue ? 'var(--severity-critical)' : 'var(--text-muted)' }}>
+    <span style={{ fontSize: 11, fontFamily: 'var(--font-space-mono)', color: overdue ? 'var(--severity-critical)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
       {overdue ? `OVERDUE ${Math.abs(remaining)}m` : `${remaining}m left`}
     </span>
   )
@@ -52,8 +52,8 @@ export function TriageCard({ report, onAction }: TriageCardProps) {
         </span>
       </div>
 
-      {/* Summary */}
-      <p style={{ fontSize: 14, margin: '0 0 6px', fontWeight: 500 }}>
+      {/* Summary — clamp to 3 lines to prevent card overflow */}
+      <p style={{ fontSize: 14, margin: '0 0 6px', fontWeight: 500, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {report.ai_summary || report.description}
       </p>
 

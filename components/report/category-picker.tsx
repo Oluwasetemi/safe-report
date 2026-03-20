@@ -37,6 +37,8 @@ export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
         <button
           key={cat.value}
           type="button"
+          aria-label={cat.label}
+          aria-pressed={value === cat.value}
           onClick={() => onChange(cat.value)}
           style={{
             display:        'flex',
@@ -49,10 +51,10 @@ export function CategoryPicker({ value, onChange }: CategoryPickerProps) {
             borderRadius:    8,
             cursor:          'pointer',
             textAlign:       'left',
-            transition:      'all 0.15s',
+            transition:      'background 0.15s, color 0.15s, border-color 0.15s',
           }}
         >
-          <span style={{ fontSize: 24, marginBottom: 4 }}>{cat.icon}</span>
+          <span style={{ fontSize: 24, marginBottom: 4 }} aria-hidden="true">{cat.icon}</span>
           <span style={{ fontWeight: 600, fontSize: 12, fontFamily: 'var(--font-barlow-condensed)' }}>
             {cat.label}
           </span>
