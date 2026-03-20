@@ -10,11 +10,11 @@ const MAX_AUDIO_SIZE = 10 * 1024 * 1024 // 10 MB
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData()
-    const audio = formData.get('audio') as File | null
-
-    if (!audio) {
+    const audioEntry = formData.get('audio')
+    if (!(audioEntry instanceof File)) {
       return NextResponse.json({ error: 'No audio file provided' }, { status: 400 })
     }
+    const audio = audioEntry
 
     if (audio.size > MAX_AUDIO_SIZE) {
       return NextResponse.json({ error: 'Audio file too large (max 10 MB)' }, { status: 413 })

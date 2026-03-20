@@ -2,6 +2,7 @@ import { streamText, convertToModelMessages, createUIMessageStreamResponse } fro
 import { anthropic } from '@ai-sdk/anthropic'
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { randomUUID } from 'crypto'
 import { SAFEGUIDE_SYSTEM_PROMPT } from '@/lib/ai/prompts'
 import { createServiceSupabaseClient } from '@/lib/supabase/server'
 
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
 
           const reportBody: Record<string, unknown> = {
             description,
-            rawFingerprint: 'safeguide-agent',
+            rawFingerprint: `safeguide-${randomUUID()}`,
             ...(parish ? { parish } : {}),
           }
 

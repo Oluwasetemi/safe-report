@@ -44,9 +44,14 @@ export async function forwardGeocode(
     // Resolve parish from the display_name field (Nominatim forward results
     // don't always include address breakdown at the same depth as /reverse)
     const displayName: string = top.display_name ?? ''
+    // Expand common abbreviations so "St. Andrew" matches key "saint andrew"
+    const normalizedDisplay = displayName
+      .toLowerCase()
+      .replace(/\bst\.\s*/g, 'saint ')
+      .replace(/\bst\s+/g, 'saint ')
     let parish = ''
     for (const [raw, normalized] of Object.entries(PARISH_NORMALIZE)) {
-      if (displayName.toLowerCase().includes(raw)) {
+      if (normalizedDisplay.includes(raw)) {
         parish = normalized
         break
       }

@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { description, rawFingerprint, photoUrl, photoUrls, voiceTranscript } = body
+    const callerParish: string | undefined = typeof body.parish === 'string' && body.parish.trim() ? body.parish.trim() : undefined
     let { lat, lng, address: bodyAddress } = body as { lat?: number; lng?: number; address?: string }
 
     // Prefer the full array; fall back to single URL for backwards compat
@@ -81,6 +82,8 @@ export async function POST(req: NextRequest) {
     if (hasCoords) {
       // lat/lng provided — reverse geocode to get human address + parish
       ;({ address, parish } = await reverseGeocode(lat!, lng!))
+      // Fall back to caller-supplied parish if geocoding returns nothing
+      if (!parish && callerParish) parish = callerParish
     } else {
       // Address-only submission — forward geocode to extract lat/lng
       const geocoded = await forwardGeocode(bodyAddress!)
@@ -93,7 +96,8 @@ export async function POST(req: NextRequest) {
       lat     = geocoded.lat
       lng     = geocoded.lng
       address = geocoded.address
-      parish  = geocoded.parish
+      // Use caller-supplied parish as disambiguation fallback
+      parish  = geocoded.parish || callerParish || ''
     }
 
     const finalClassification = await classifyReport({ description, parish, lat: lat!, lng: lng! })
