@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockHandleUpdate = vi.fn().mockResolvedValue(undefined)
 
-// Mock the bot module — getBot() returns an object with handleUpdate
+// Mock the bot module — getInitializedBot() resolves to an object with handleUpdate
 vi.mock('@/lib/telegram/bot', () => ({
-  getBot: () => ({
+  getInitializedBot: vi.fn().mockResolvedValue({
     handleUpdate: mockHandleUpdate,
   }),
 }))

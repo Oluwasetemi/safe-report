@@ -73,7 +73,7 @@ export function LoginForm() {
       )}
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !email || !password}
         style={{
           padding:       '14px',
           background:    loading ? 'var(--border)' : 'var(--brand-primary)',
